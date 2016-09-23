@@ -118,7 +118,7 @@ typedef struct{
 	char cnt;	
 }tRAWCAN_RCV_QUEUE;
 
-#define GPS_RCV_QUEUE_SIZE       (int)50
+
 #define CAN_RCV1939_QUEUE_SIZE       (int)50
 #define CAN_RCV15765_QUEUE_SIZE       (int)50
 
@@ -133,20 +133,9 @@ typedef struct
   uint8_t      data[300];          /* 8 x data bytes */
 }tRCV15765data;
 
-typedef struct
-{
-  uint16_t     len;               /* message id */
-  uint8_t      data[50];          /* 8 x data bytes */
-}tRcvGpsData;
 
 
-typedef struct
-{
-  uint8_t      wp;                     /* write pointer */
-  uint8_t      rp;                     /* read pointer */
-  uint8_t      cnt;                    /* frame counter in queue */
-  tRcvGpsData      qdata[GPS_RCV_QUEUE_SIZE];   /* frame data */
-}tGPS_RCV_QUEUE;
+
 
 
 typedef struct
@@ -202,13 +191,18 @@ extern uint8_t currentLidlen;
 extern uint8_t b15765rcv;
 extern uint8_t I2L[CAN_LOGIC_MAX]; /*indexnum to logic number*/   /*查找I对应具体的逻辑通道值*/
 extern tCAN_RCV15765_QUEUE can15765buf;
-extern tGPS_RCV_QUEUE bps_buf;
 
 
 
-void task_can0_read();
-void task_can1_read();
-uint8_t Rx_ISO15765_Frame(struct can_frame *fr,uint8_t channel);
+//extern void task_can0_read();
+//extern void task_can1_read();
+extern uint8_t Rx_ISO15765_Frame(struct can_frame *fr,uint8_t channel);
+extern void handle_1939(struct can_frame *fr,int chan);
+extern void handle_15765(struct can_frame *fr,int chan,int msg_no);
+extern void up_can0(void);
+extern void up_can1(void);
+extern void can_info_process(void);
+
 
 
 #endif

@@ -56,47 +56,38 @@ tK_RCV15765_QUEUE k15765buf;
 //#define B10400 0000014
 #define B10400 0010017
 
-//#define  B9600	0000015
 
-extern int fd_k;
+
+
 
 int OpenKline(void)
 {
-	//int iFd;
+	int l_fd_k;
+
 	struct termios opt;
-
-	if(fd_k > 0)
-	{
-		close(fd_k);
-	}
-
 	
-	fd_k = open("/dev/ttySP0", O_RDWR | O_NOCTTY | O_NDELAY); 
+	l_fd_k = open("/dev/ttySP0", O_RDWR | O_NOCTTY | O_NDELAY); 
 	//fd_k = open("/dev/ttySP0", O_RDWR | O_NOCTTY);
-	if(fd_k < 0) 
+	if(l_fd_k < 0) 
 	{
 		perror("/dev/ttySP0");
 		return -1;
 	}
 	
 	//tcgetattr(fd_k, &opt); 
-	if(tcgetattr(fd_k, &opt)<0)
+	if(tcgetattr(l_fd_k, &opt)<0)
 	{
 #if dug_k > 0
 		printf_va_args("kline tcgetattr error\n");
 #endif
-		return 0;
+		return -1;
 	}
-	cfsetispeed(&opt, B10400);
-	cfsetospeed(&opt, B10400);
-
-	//cfsetispeed(&opt, B9600);
-	//cfsetospeed(&opt, B9600);
+	cfsetispeed(&opt, B10400);//cfsetispeed(&opt, B9600);
+	cfsetospeed(&opt, B10400);//cfsetospeed(&opt, B9600);	
 
 	//opt.c_lflag   &=   ~(ECHO	|	ICANON	 |	 IEXTEN   |   ISIG);
 	opt.c_lflag   &=   ~(ICANON | ECHO | ECHOE | ISIG);
-	opt.c_iflag   &=   ~(BRKINT   |   ICRNL   |   INPCK   |   ISTRIP   |   IXON);
-	//                        
+	opt.c_iflag   &=   ~(BRKINT   |   ICRNL   |   INPCK   |   ISTRIP   |   IXON);                      
 	opt.c_oflag   &=	~(OPOST);	 opt.c_cflag   &=	~(CSIZE   |   PARENB);
 	opt.c_cflag &= ~CSIZE;
 	opt.c_cflag	|=	 CS8;	 /* 	* 'DATA_LEN' bytes can be read by serial	 */    
@@ -104,19 +95,17 @@ int OpenKline(void)
 	//opt.c_cc[VTIME]	=	150;	
 	opt.c_cc[VMIN]	=	0;										   
 	opt.c_cc[VTIME]	=	0;
-	if (tcsetattr(fd_k,	 TCSANOW,	&opt)<0) 
+	if (tcsetattr(l_fd_k,	 TCSANOW,	&opt)<0) 
 	{		  
-		return   -1;
-	}    
-	return fd_k;
-
+		return -1;
+	}
+	
+	return l_fd_k;
 }
 
 
 
-int readflag = 0;
-uint32_t currentKlinelid;
-uint8_t ucLogicKIndex;
+
 
 void handl_K_rcvdata(unsigned char *pbuf,int len)
 {
@@ -149,262 +138,40 @@ void handl_K_rcvdata(unsigned char *pbuf,int len)
 	printf_va_args("\n");
 #endif
 }
-void task_k()
-{	
-	int i = 0;
-	
-	uint8_t kcommand[10];
-	uint8_t ktest[10];
-	int j,s;
-	int d;  //for dug
-	int len;
-	int kCommandLen;
-	int rcvcnt;
-	unsigned char pBuf[0xff];
-	unsigned char temp[0xff];
-	int overtime;
-	char tmp[1024];
-	int readcnt;
-	int Savedatalen;
-	int ii;
-	
-	while(1)
-	{		
-		if(g_sys_info.state_T15 == 0)
-		{
-			sleep(1);
-			continue;
+
+
+ssize_t read_kfile(int fd, unsigned char *buf, off_t offset, unsigned int to)
+{
+	ssize_t cnt;
+	ssize_t len;
+
+	/*cnt = 0;
+	while(cnt < offset)
+	{
+		len = read(fd, &buf[cnt], 1);
+		if(len > 0)
+		{							
+			cnt += len;
 		}
-		if(g_isDownloadCfg)
-		{
-			sleep(1);
-			continue;
-		}
-		for(i=0;i<siganl_kline_num;i++)
+	}*/
+	lseek(fd, offset, SEEK_SET);
+	
+	cnt = 0; 
+	while(to > getSystemTime())
+	{
+		len = read(fd, &buf[cnt], 1);
+		if(len > 0)
 		{			
-			if((kline_config[0].bIsValid)&&(g_sys_info.state_T15==1))
-			{
-				switch(KlineInitState[0])
-				{
-					case K_INIT_BREAK:
-						memset(pBuf,0,0xff);						
-						memcpy((void*)kcommand,(const void*)kline_config[0].ucInitFrmData,10);
-
-						readflag = 0;
-						OpenKline();
-#if (dug_k > 0)
-						if(fd_k<0)
-						{
-							printf_va_args("open kline error\n");
-						}
-#endif						
-						write(fd_k,(void*)kcommand,5);
-						readflag = 1;												
-						
-						kline_TxState.length = 5;						
-						rcvcnt = 0;
-						overtime = getSystemTime()+2000;
-						
-						readcnt = 5;
-						while(readcnt)
-						{
-							len = read(fd_k, &pBuf[rcvcnt], 1);
-							if(len > 0)
-							{							
-								readcnt--;
-								rcvcnt += len;
-							}
-						}
-
-						rcvcnt = 0;
-						while(overtime > getSystemTime())						
-						{
-							len = read(fd_k, &pBuf[rcvcnt], 1);							
-							if(len >0)
-							{
-								#if 1							    
-								rcvcnt += len;								
-								{
-									if(rcvcnt >= ((pBuf[0]&0x3F)+4))
-										break;
-								}
-								#endif
-							}
-							usleep(1000);
-						}				
-						
-						if(pBuf[3] == (0x81+0x40))
-						{
-							KlineInitState[0] = K_INIT_OK;
-							k_rcv_last_time = getSystemTime();
-							
-						}
-						
-						if(overtime < getSystemTime())
-						{
-							KlineInitState[0] = K_TIMEOUT;
-							break;
-						}						
-						break;
-					case K_INIT_OK:
-						if(k_rcv_last_time + 5000 < getSystemTime())
-						{
-							KlineInitState[0] = K_TIMEOUT;							
-#if (dug_k > 0)
-							printf_va_args("K_INIT_OK timeout!\n");
-#endif
-							break;
-						}
-						
-						if(kline_siganl[i].dwNextTime < getSystemTime())
-						{
-							currentKlinelid = kline_siganl[i].dwLocalID;
-                        	ucLogicKIndex = kline_siganl[i].ucLogicChanIndex;
-													
-							kcommand[1] = kline_config[0].ucInitFrmData[1];
-							kcommand[2] = kline_config[0].ucInitFrmData[2];							
-							kcommand[3] = kline_siganl[i].ucRdDatSerID;
-							
-							switch(kline_siganl[i].ucRdDatSerID)
-							{
-								case 0x23:
-									kcommand[0] = 0x85;									
-									kcommand[4] = 0xFF & (kline_siganl[i].dwLocalID >> 16);
-									kcommand[5] = 0xFF & (kline_siganl[i].dwLocalID >> 8);
-									kcommand[6] = 0xFF & (kline_siganl[i].dwLocalID);		
-									kcommand[7] = kline_siganl[i].ucMemSize;
-									kCommandLen = 8;
-									break;
-								case 0x21:									
-								case 0x22:
-									kcommand[0] = 0x82;
-									kcommand[4] = 0xFF & kline_siganl[i].dwLocalID;
-									kCommandLen = 5;
-									break;
-							}							
-							
-							s = 0;
-							for(j=0;j<kCommandLen;j++)
-								s += kcommand[j];
-							kcommand[kCommandLen] = (uint8_t)(0xFF & s);
-							write(fd_k,(void*)kcommand,kCommandLen+1);
-
-#if (dug_k > 0)
-							printf_va_args("Ksend:");
-
-							for(d=0;d<kCommandLen+1;d++)
-							{
-								printf_va_args(" %02x",kcommand[d]);
-							}
-							printf_va_args("\n");
-#endif
-														
-							kline_siganl[i].dwNextTime = getSystemTime()+kline_siganl[i].wSampleCyc;
-
-							memset(pBuf,0,0xff);
-							overtime = getSystemTime()+1000;
-
-							readcnt = kCommandLen+1;							
-							
-							rcvcnt = 0;
-							while(readcnt)
-							{
-								len = read(fd_k, &pBuf[rcvcnt], 1);
-								if(len > 0)
-								{							
-									readcnt--;
-									rcvcnt += len;
-								}
-							}							
-							
-							rcvcnt = 0;
-							while(overtime > getSystemTime())						
-							{
-								len = read(fd_k, &pBuf[rcvcnt], 1);							
-								if(len >0)
-								{
-									#if 1							    
-									rcvcnt += len;									
-									if(rcvcnt >= ((pBuf[0]&0x3F)+4))
-										break;
-									
-									#endif
-								}
-								usleep(1000);
-							}														
-
-							if(overtime < getSystemTime())
-							{
-								KlineInitState[0] = K_TIMEOUT;
-								break;
-							}							
-							//kline_RxState.dataLength = rcvcnt;
-							handl_K_rcvdata(pBuf,rcvcnt);
-							
-							upDateTime();
-							led_k_blink(2);
-
-							//***********************
-							//Savedatalen = kline_RxState.dataLength - 2;
-							Savedatalen = kline_RxState.dataLength - 1;  //???
-
-							if(kline_siganl[i].ucRdDatSerID != 0x23)
-							{
-								Savedatalen--;
-							}
-					        k15765buf.qdata[k15765buf.wp].data[0] = UP_DAQ_SIGNAL;
-					        k15765buf.qdata[k15765buf.wp].data[1] = SIGNAL_DIAG_KLINE;
-					        k15765buf.qdata[k15765buf.wp].data[2] = 0xFF & (Savedatalen+17-4); 
-					        k15765buf.qdata[k15765buf.wp].data[3] = (Savedatalen+17-4) >> 8;
-							
-					        k15765buf.qdata[k15765buf.wp].data[4] = 0xFF & currentKlinelid;
-					        k15765buf.qdata[k15765buf.wp].data[5] = 0xFF & (currentKlinelid>>8);
-					        k15765buf.qdata[k15765buf.wp].data[6] = 0xFF & (currentKlinelid>>16);
-					        k15765buf.qdata[k15765buf.wp].data[7] = 0xFF & (currentKlinelid>>24);
-
-						   	memcpy(&k15765buf.qdata[k15765buf.wp].data[8], (void*)&US_SECOND,4);
-							memcpy(&k15765buf.qdata[k15765buf.wp].data[12], (void*)&US_MILISECOND,2);
-
-							k15765buf.qdata[k15765buf.wp].data[14] = 0xFF & (Savedatalen);
-							k15765buf.qdata[k15765buf.wp].data[15] = Savedatalen >> 8; 							
-							k15765buf.qdata[k15765buf.wp].data[16] = kline_config[0].ucLogicChanIndex;
-
-							if(kline_siganl[i].ucRdDatSerID == 0x23)
-							{
-								
-								(void)memcpy(&k15765buf.qdata[k15765buf.wp].data[17],(const void *)(&pBuf[kline_RxState.headerLength+1]), Savedatalen);//add kline index
-							}
-							else
-							{
-								(void)memcpy(&k15765buf.qdata[k15765buf.wp].data[17],(const void *)(&pBuf[kline_RxState.headerLength+2]), Savedatalen);//add kline index
-							}
-							
-							k_rcv_last_time = getSystemTime();
-
-							k15765buf.qdata[k15765buf.wp].len = Savedatalen + 17;
-					        k15765buf.wp++;
-					        if(k15765buf.wp == K_RCV15765_QUEUE_SIZE)  k15765buf.wp = 0;    
-					        k15765buf.cnt++;
-							g_sys_info.state_k = 1;
-						//************************								
-
-						}
-						
-						break;
-					case K_TIMEOUT:
-						if(fd_k > 0)
-						{
-							close(fd_k);
-						}
-						//close(fd_k);
-						KlineInitState[0] = K_INIT_BREAK;
-						fd_k = 0;
-						break;						
-				}
-			}
+			cnt += len;
+			if(cnt >= ((buf[0]&0x3F)+4))
+				return cnt;
 		}
-		usleep(1000);		
+		usleep(1000);
 	}
+
+	return 0;
 }
+
+
 
 

@@ -36,7 +36,7 @@
 #include "upload_file.h"
 
 #include "task.h"
-#include "power_monitor.h"
+#include "monitor.h"
 
 
 
@@ -72,7 +72,7 @@ void net_to_manage(void)
 				g_TimeoutCnt = 0;
 			}				
 		}
-		power_monitor();
+		monitor();
 	}
 }
 
@@ -110,7 +110,7 @@ void main(int argc,char *argv[])
 	g_sys_info.state_3g = 1;
 	ret=pthread_create(&id_can,       NULL,(void *)task_can,        NULL);
 	ret=pthread_create(&id_k,         NULL,(void *)task_k,          NULL);
-	ret=pthread_create(&id_sd,        NULL,(void *)task_sd,         NULL);
+	ret=pthread_create(&id_sd,        NULL,(void *)task_recfile,         NULL);
 	
 	#if	CFG_3G_ENABLE
 	ret=pthread_create(&id_heartbeat, NULL,(void *)task_heartbeat,  NULL);

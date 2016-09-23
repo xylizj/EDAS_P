@@ -121,13 +121,7 @@ typedef unsigned int    	BOOL;
 typedef unsigned char 		BYTE;
 typedef unsigned char 		byte;
 
-typedef struct
-{
-	unsigned char filename[255];
-	//int filecnt;
-	int offset;
-	int flag;       // 0:no trans 1:transce half 2:trans done	
-}tFilesRecord;
+
 
 
 typedef struct
@@ -153,17 +147,12 @@ extern volatile unsigned int US_MILISECOND;
 
 
 
-extern int fd_k;
 extern int sockfd;
 
-extern tFilesRecord  filesRecord[100];
-extern int filescnt;
 
-extern tFilesRecord  filesOldRecord[100];
-extern int fileoldscnt;
 
-extern char cur3gfilename[100];
-extern int cur3gfilename_len;
+
+
 extern char CAR_ID[40];
 extern char T15_state;
 
@@ -203,26 +192,15 @@ extern pthread_mutex_t g_rtc_mutex;
 extern void sendUdpMsg(char *buf,int len,unsigned char rxMsgId);
 
 extern unsigned int getSystemTime(void);
-extern void chksum(char *buf,int len);
+extern void chksum(uint8_t *buf,int len);
 extern void upDateTime(void);
 
 extern void creat_FileName(unsigned char *ptPath,unsigned char *name);
 
-extern void writeFilesRecords(void);
 extern char *itoa(int num, char *str, int radix);
 extern void reinit_3g_net(void);
 extern void makeKillCommand(char *command,int pid);
-extern void task_can(void);
-extern void task_k(void);
-extern void task_ChkSndFile(void);
-extern void task_sd(void);
-extern void task_gps(void);
-extern void task_udprcv(void);
-extern void task_handle_msg(void);
-extern void task_check_msgrx(void);
-extern void task_heartbeat(void);
-extern void getFilesName(void);
-extern void writeFilesRecords(void);
+
 extern void printf_va_args(const char* fmt, ...);
 
 extern int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free);

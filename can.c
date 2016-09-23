@@ -36,7 +36,6 @@ tRAWCAN_RCV_QUEUE can0queue,can1queue;
 tCAN_RCV1939_QUEUE can1939buf[2];
 tCAN_RCV15765_QUEUE can15765buf;
 
-tGPS_RCV_QUEUE bps_buf;
 
 
 TP_RX_ENGINE_TYPE TpRxState[CAN_LOGIC_MAX];
@@ -160,7 +159,7 @@ int CanFilterInit(int chan)
 	return 1;
 }
 
-static void handle_1939(struct can_frame *fr,int chan)
+void handle_1939(struct can_frame *fr,int chan)
 {
 	int i;
 	unsigned int temp_id;
@@ -198,7 +197,7 @@ static void handle_1939(struct can_frame *fr,int chan)
             can1939buf[chan].cnt++;	
 }
 
-static void handle_15765(struct can_frame *fr,int chan,int msg_no)
+void handle_15765(struct can_frame *fr,int chan,int msg_no)
 {
 	tRXBUF rxbuf;
 	uint8_t Lchan;
@@ -286,109 +285,11 @@ FLAG_15765:
         b15765rcv = 1;
     }
     return;
-
-	
 }
 
-void task_can0_read()
-{
-	int ret;
-	fd_set rset;
-	int i;
-	char is15765rcv;
-	struct can_frame fr,frdup;
-
-	while(1)
-	{
-		FD_ZERO(&rset);
-		FD_SET(s_can0,&rset);
-		ret = read(s_can0,&frdup,sizeof(frdup));
-		led_Rx_blink(5);
-		upDateTime();	
-
-		if(ret<sizeof(frdup)){
-			return;
-		}
-		if(frdup.can_id & CAN_ERR_FLAG){
-			continue;
-		}
-
-		is15765rcv = 0;
-		for(i=0;i<canid_diag_cnt[0];i++)
-		{
-			if(frdup.can_id == canid_diag_id[0][i])
-			{
-				//handle 15765
-				if(g_sys_info.state_T15==1)
-				{
-					handle_15765(&frdup,0,i);
-					g_sys_info.state_can0_15765 = 1;
-					is15765rcv = 1;
-				}
-				break;
-			}
-		}	
-		//1939 frame
-		if((g_sys_info.state_T15==1)&&(is15765rcv == 0))
-		{
-			handle_1939(&frdup,0);
-			g_sys_info.state_can0_1939 = 1;
-		}
 
 
-	}	
-}
 
-void task_can1_read()
-{
-	int ret;
-	fd_set rset;
-	int i;
-	char is15765rcv;
-	struct can_frame fr,frdup;
-
-	while(1)
-	{
-		FD_ZERO(&rset);
-		FD_SET(s_can1,&rset);
-		ret = read(s_can1,&frdup,sizeof(frdup));
-		led_Rx_blink(5);
-		upDateTime();	
-
-		if(ret<sizeof(frdup)){
-			return;
-		}
-		if(frdup.can_id & CAN_ERR_FLAG){
-			continue;
-		}
-
-		is15765rcv = 0;
-		for(i=0;i<canid_diag_cnt[1];i++)
-		{
-			if(frdup.can_id == canid_diag_id[1][i])
-			{
-				//handle 15765
-				if(g_sys_info.state_T15==1)
-				{
-					handle_15765(&frdup,1,i);
-					g_sys_info.state_can1_15765 = 1;
-					is15765rcv = 1;
-				}
-				break;
-			}
-		}
-
-	
-		//1939 frame
-		if((g_sys_info.state_T15==1)&&(is15765rcv == 0))
-		{
-			handle_1939(&frdup,1);
-			g_sys_info.state_can1_1939 = 1;
-		}
-
-
-	}	
-}
 void SendFC(uint8_t channel) 
 {
     outq[channel].cnt = 1;         //2009-11-12, lzy, fixed error here
@@ -582,7 +483,180 @@ uint8_t DirectCanTransmit(uint8_t logchan)
 
 
 
+void up_can0(void)
+{		
+	int rate_cnt;
+	int fd;
+	char rate[8][10]={"125000","250000","","500000","","","","1000000"};
+	struct ifreq ifr0;
+	int ret;
+	struct sockaddr_can addr0;	
+		
+	system("ifconfig can0 down");
+	sleep(1);
+	rate_cnt = can_channel[0].wBaudrate/125 - 1;		
 
+	if((fd=(open("/sys/devices/platform/FlexCAN.0/bitrate",O_CREAT | O_TRUNC | O_WRONLY,0600)))<0)
+	{
+		perror("open can0:\n"); 		
+	}
+
+	write(fd,rate[rate_cnt],strlen(rate[rate_cnt]));
+	close(fd);			
+	sleep(1);
+
+	system("ifconfig can0 up");
+	sleep(1);
+#if dug_can > 0 		
+	printf_va_args("ifconfig can0 up,rate_cnt:%d,bitrate:%s!\n",rate_cnt,rate[rate_cnt]);
+#endif
+	s_can0 = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+	strcpy(ifr0.ifr_name, "can0");
+	ret = ioctl(s_can0, SIOCGIFINDEX, &ifr0);
+	addr0.can_family = PF_CAN;
+	addr0.can_ifindex = ifr0.ifr_ifindex;
+	ret = bind(s_can0, (struct sockaddr *)&addr0, sizeof(addr0));
+	if (ret < 0) {
+		perror("bind can0 failed");
+	}
+	ret = setsockopt(s_can0, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[0], canfcnt[0] * sizeof(canfilter[0][0]));
+#if dug_can > 0 		
+	if (ret < 0) {
+				printf_va_args("setsockopt can0 failed");
+	}
+#endif
+}
+
+
+
+void up_can1(void)
+{
+	int rate_cnt;
+	int fd;
+	char rate[8][10]={"125000","250000","","500000","","","","1000000"};
+	struct ifreq ifr1;
+	int ret;
+	struct sockaddr_can addr1;
+	pthread_t id_can1_read;
+
+	system("ifconfig can1 down");
+	sleep(1);
+	rate_cnt = can_channel[1].wBaudrate/125 - 1;	
+
+	if((fd=(open("/sys/devices/platform/FlexCAN.1/bitrate",O_CREAT | O_TRUNC | O_WRONLY,0600)))<0)
+	{
+		perror("open can1:\n"); 		
+	}
+	else{
+	}
+	write(fd,rate[rate_cnt],strlen(rate[rate_cnt]));
+	close(fd);
+	sleep(1);
+
+	system("ifconfig can1 up");
+	sleep(1);
+#if dug_can > 0		
+	printf_va_args("ifconfig can1 up,rate_cnt:%d,bitrate:%s!\n",rate_cnt,rate[rate_cnt]);
+#endif
+	s_can1 = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+	strcpy(ifr1.ifr_name, "can1");
+	ret = ioctl(s_can1, SIOCGIFINDEX, &ifr1);
+	addr1.can_family = PF_CAN;
+	addr1.can_ifindex = ifr1.ifr_ifindex;
+	bind(s_can1, (struct sockaddr *)&addr1, sizeof(addr1));
+	ret = setsockopt(s_can1, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[1], canfcnt[1] * sizeof(canfilter[1][0]));
+}
+
+
+
+void can_info_process(void)
+{
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	int m = 0;
+	uint8_t buffer[10];
+
+	for(i=0;i<CAN_CHANNEL_MAX;i++)
+	{			
+		for(j=0;j< can_channel[i].ucLogicChanNum;j++)
+		{			
+			for(k=0;k<can_channel[i].pt_logic_can[j]->ucSignalNum;k++)
+			{
+				if(getSystemTime() >= can_channel[i].pt_logic_can[j]->pt_signal[k]->dwNextCommTime)
+				{
+					ulFlashTxId[i] = can_channel[i].pt_logic_can[j]->dwTesterID;
+					ulFlashRxId[i] = can_channel[i].pt_logic_can[j]->dwEcuID;				
+					currenLogicChan = can_channel[i].pt_logic_can[j]->ucLogicChanIndex;
+					currentMSize = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
+					can_channel[i].pt_logic_can[j]->pt_signal[k]->dwNextCommTime = getSystemTime()+can_channel[i].pt_logic_can[j]->pt_signal[k]->wSampleCyc;						
+					currentlid = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID;
+					currentLidlen = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength;
+					buffer[0] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucRdDatSerID;
+					b15765rcv = 0;
+					switch(can_channel[i].pt_logic_can[j]->pt_signal[k]->ucRdDatSerID)
+					{
+						case 0x21:	//read data by LID
+						case 0x22:	//read data by LID
+							switch(can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength)									
+							{
+								case 1:
+									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID;
+									break;
+								case 2:
+									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8;
+									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
+									break;
+								default: break;
+							}
+							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength+1,(i<<2+j));	
+#if dug_can > 0
+							printf_va_args("CAN_Send15765,ulFlashTxId[%d]:%08x,%02x %02x %02x\n",i,ulFlashTxId[i],buffer[0],buffer[1],buffer[2]);
+#endif
+							break;
+						case 0x23:	//read data by MEM
+							switch(can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize) 								
+							{
+								case 1:
+									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID;
+									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
+									break;
+								case 2:
+									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8;
+									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
+									buffer[3] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
+									break;
+								case 3:
+									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>16;
+									buffer[2] = (can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8) & 0xFF;										
+									buffer[3] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
+									buffer[4] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
+									break;
+								default: break;
+							}
+							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize+2,(i<<2+j));
+#if dug_can
+							printf_va_args("CAN_Send15765,ulFlashTxId[%d]:%08x,:%02x %02x %02x %02x %02x\n",i,ulFlashTxId[i],buffer[0],buffer[1],buffer[2],buffer[3],buffer[4]);
+#endif
+							break;
+					}						
+									
+					m=500;
+					while((!b15765rcv) && m)
+					{
+						m--;
+						usleep(1000);
+					}				
+					
+				}
+				else
+				{
+					usleep(1000);
+				}
+			}
+		}
+	}
+}	
 
 
 

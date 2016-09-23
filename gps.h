@@ -5,7 +5,6 @@
 
 
 
-
 #define DATA_LEN                0xFF                                    /* test data's len              */
 #define GPS_SERIAL_BUF_LEN		1024
 #define GPS_INFO_BUF_LEN		80

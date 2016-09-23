@@ -9,8 +9,10 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "common.h"
+#include "recfile.h"
 #include "upload_file.h"
 #include "queue.h"
+#include "net3g.h"
 
 
 FILE *fp_curfile_t;
@@ -22,13 +24,9 @@ FILE *g_fp_cfg;
 volatile int g_fp_cfg_state = 0;
 
 
-struct sockaddr_in g_addr;
 
 unsigned int flag_rcvd;
-unsigned int req_rcv;
 
-unsigned char rbuf[MAX_SIZE];
-unsigned int n_rcv;
 
 
 volatile int filesize;
@@ -342,7 +340,7 @@ void doRspCheckUploadData( MsgInfo *msg)
 					
 					filesRecord[curTransFile].flag = 2;
 					fileTransState = IDLE;
-					writeFilesRecords();
+					save_recfile_list();
 				}
 				else
 				{
@@ -603,40 +601,6 @@ int checkdata(unsigned char *buf,unsigned int n)
 	{
 		//printf_va_args_en(dug_3g,"3g rcv check error\n");
 		return 0;
-	}
-}
-void task_udprcv()
-{
-	int i;
-	MsgInfo msg;
-	while(1)
-	{
-		while(g_sys_info.state_3g != 1)
-		{
-			sleep(1);
-		}
-		
-		req_rcv = 0;			
-		n_rcv = 0;
-		bzero(rbuf,MAX_SIZE);
-		n_rcv=recvfrom(sockfd,rbuf,MAX_SIZE,0,NULL,NULL);		
-		g_sys_info.net_stat = 1;
-		g_Rcv3gCnt++;
-		
-		if(g_Rcv3gCnt > 0x1FFFFFFF) 
-		{
-			g_LastRcvCnt = 0;
-			g_Rcv3gCnt = 1;
-		}
-				
-		msg.len = n_rcv;
-		msg.ucServeId = rbuf[0];
-		memcpy(msg.ucBuff,rbuf,n_rcv);
-
-		if(checkdata(rbuf,n_rcv))
-		{
-			EnQueue(&msg_queue,&msg);
-		}
 	}
 }
 

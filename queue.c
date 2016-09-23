@@ -9,7 +9,7 @@ pthread_mutex_t g_mutex;
 Status InitQueue(LinkQueue *Q)
 { 
 	int ret;
-	QueuePtr p;
+	QueuePtr p = NULL;
 
 	p = (QueuePtr)malloc(sizeof(QNode));
 	if(NULL == p)
@@ -20,7 +20,7 @@ Status InitQueue(LinkQueue *Q)
 	(*Q).rear = p;
 	(*Q).front = p; 
 	ret=pthread_mutex_init(&g_mutex, NULL);
-	if(0!=ret)
+	if(0 != ret)
 	{
 		return ERROR;
 	}

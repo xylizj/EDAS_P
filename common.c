@@ -46,7 +46,6 @@ unsigned int g_LastRcvCnt;
 bool g_isDownloadCfg = FALSE;
 
 
-int fd_k = -1;
 int sockfd;
 tMsgState curMsgstate;
 
@@ -224,7 +223,7 @@ void upDateTime()
 	US_SECOND = ts.tv_sec;
 }
 
-void chksum(char *buf,int len)
+void chksum(uint8_t *buf,int len)
 {
 	unsigned int i,s;
 	s=0;

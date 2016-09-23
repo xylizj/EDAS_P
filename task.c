@@ -5,21 +5,25 @@
 #include "gps.h"
 #include "gpio.h"
 #include "common.h"
+#include "recfile.h"
 #include "readcfg.h"
 #include "kline.h"
+#include "net3g.h"
 
-unsigned char record_filename[255];
 
-void task_sd(void)
+
+
+void task_recfile(void)
 {
 	FILE *fp;	
 	int isCurRcdFileOpen;
 	int iCount;
+	unsigned char record_filename[100];
 
 	pthread_mutex_lock(&g_file_mutex); 
-	getFilesRecords();
-	getFilesName();
-	writeFilesRecords();
+	get_recfile_list();
+	get_recfile_name();
+	save_recfile_list();
 	pthread_mutex_unlock(&g_file_mutex); 
 	
 	while(1)
@@ -34,16 +38,14 @@ void task_sd(void)
 		{
 			sleep(1);
 		}
-#if dug_readcfg > 0
-		printf_va_args("g_sys_info.state_T15:%d\n",g_sys_info.state_T15);
-#endif 
+
 		getSDstatus(&sd_total,&sd_used,&sd_free);
 		db_sd_free = sd_free/1024; 
 		creat_FileName(RECORDPATH,record_filename); 
 #if dug_readcfg > 0
 				printf_va_args("record_filename is %s\n",record_filename);
 #endif 
-		fp=fopen(record_filename,"w+b");	
+		fp = fopen(record_filename,"w+b");	
 		if(fp > 0)
 		{
 #if dug_readcfg > 0
@@ -97,12 +99,13 @@ void task_sd(void)
 	            if(k15765buf.rp == K_RCV15765_QUEUE_SIZE)  k15765buf.rp = 0;    
 	            k15765buf.cnt--;
 			}
-			if(bps_buf.cnt)
+			if(g_gps_info.cnt)
 			{
-				Write2SDBuffer(fp,&bps_buf.qdata[bps_buf.rp].data[0], bps_buf.qdata[bps_buf.rp].len);
-				bps_buf.rp++;
-	            if(bps_buf.rp == GPS_RCV_QUEUE_SIZE)  bps_buf.rp = 0;    
-	            bps_buf.cnt--;
+				Write2SDBuffer(fp,&g_gps_info.qdata[g_gps_info.rp].data[0], g_gps_info.qdata[g_gps_info.rp].len);
+				g_gps_info.rp++;
+	            if(g_gps_info.rp == GPS_RCV_QUEUE_SIZE)  
+					g_gps_info.rp = 0;    
+	            g_gps_info.cnt--;
 			}
 			usleep(2000);
 		}
@@ -141,6 +144,9 @@ void task_gps(void)
 			gps_info_parse();	
 		}
 	}
+
+	free(gps_ser_buf);
+	gps_ser_buf = NULL;
 }
 
 
@@ -163,7 +169,7 @@ volatile uint32_t currentMSize;
 int currenLogicChan;
 uint8_t currentLidlen;
 uint8_t b15765rcv;
-uint8_t I2L[CAN_LOGIC_MAX]; /*indexnum to logic number*/   /*Êü•ÊâæIÂØπÂ∫îÂÖ∑‰ΩìÁöÑÈÄªËæëÈÄöÈÅìÂÄº*/
+uint8_t I2L[CAN_LOGIC_MAX]; /*indexnum to logic number*/   /*≤È’“I∂‘”¶æﬂÃÂµƒ¬ﬂº≠Õ®µ¿÷µ*/
 
 
 static void task_canTP(void)
@@ -269,205 +275,135 @@ static void task_canTP(void)
 	}
 }
 
-void create_can0_task(void)
-{		
-	int rate_cnt;
-	int fd;
-	char rate[8][10]={"125000","250000","","500000","","","","1000000"};
-	struct ifreq ifr0;
-	int ret;
-	struct sockaddr_can addr0;
-	pthread_t id_can0_read;
-		
-	system("ifconfig can0 down");
-	sleep(1);
-	rate_cnt = can_channel[0].wBaudrate/125 - 1;		
 
-	if((fd=(open("/sys/devices/platform/FlexCAN.0/bitrate",O_CREAT | O_TRUNC | O_WRONLY,0600)))<0)
-	{
-		perror("open can0:\n"); 		
-	}
-
-	write(fd,rate[rate_cnt],strlen(rate[rate_cnt]));
-	close(fd);			
-	sleep(1);
-
-	system("ifconfig can0 up");
-	sleep(1);
-#if dug_can > 0 		
-	printf_va_args("ifconfig can0 up,rate_cnt:%d,bitrate:%s!\n",rate_cnt,rate[rate_cnt]);
-#endif
-	s_can0 = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-	strcpy(ifr0.ifr_name, "can0");
-	ret = ioctl(s_can0, SIOCGIFINDEX, &ifr0);
-	addr0.can_family = PF_CAN;
-	addr0.can_ifindex = ifr0.ifr_ifindex;
-	ret = bind(s_can0, (struct sockaddr *)&addr0, sizeof(addr0));
-	if (ret < 0) {
-		perror("bind can0 failed");
-	}
-	ret = setsockopt(s_can0, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[0], canfcnt[0] * sizeof(canfilter[0][0]));
-#if dug_can > 0 		
-	if (ret < 0) {
-				printf_va_args("setsockopt can0 failed");
-	}
-#endif
-	ret=pthread_create(&id_can0_read,NULL,(void *)task_can0_read,NULL);
-#if dug_can > 0 		
-	if(ret!=0)
-		printf_va_args("prhtead can0read created");
-#endif
-}
-
-
-
-void create_can1_task(void)
+static void task_can0_read()
 {
-	int rate_cnt;
-	int fd;
-	char rate[8][10]={"125000","250000","","500000","","","","1000000"};
-	struct ifreq ifr1;
 	int ret;
-	struct sockaddr_can addr1;
-	pthread_t id_can1_read;
+	fd_set rset;
+	int i;
+	char is15765rcv;
+	struct can_frame fr,frdup;
 
-	system("ifconfig can1 down");
-	sleep(1);
-	rate_cnt = can_channel[1].wBaudrate/125 - 1;	
-
-	if((fd=(open("/sys/devices/platform/FlexCAN.1/bitrate",O_CREAT | O_TRUNC | O_WRONLY,0600)))<0)
+	while(1)
 	{
-		perror("open can1:\n"); 		
-	}
-	else{
-	}
-	write(fd,rate[rate_cnt],strlen(rate[rate_cnt]));
-	close(fd);
-	sleep(1);
+		FD_ZERO(&rset);
+		FD_SET(s_can0,&rset);
+		ret = read(s_can0,&frdup,sizeof(frdup));
+		led_Rx_blink(5);
+		upDateTime();	
 
-	system("ifconfig can1 up");
-	sleep(1);
-#if dug_can > 0		
-	printf_va_args("ifconfig can1 up,rate_cnt:%d,bitrate:%s!\n",rate_cnt,rate[rate_cnt]);
-#endif
-	s_can1 = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-	strcpy(ifr1.ifr_name, "can1");
-	ret = ioctl(s_can1, SIOCGIFINDEX, &ifr1);
-	addr1.can_family = PF_CAN;
-	addr1.can_ifindex = ifr1.ifr_ifindex;
-	bind(s_can1, (struct sockaddr *)&addr1, sizeof(addr1));
-	ret = setsockopt(s_can1, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[1], canfcnt[1] * sizeof(canfilter[1][0]));
+		if(ret<sizeof(frdup)){
+			return;
+		}
+		if(frdup.can_id & CAN_ERR_FLAG){
+			continue;
+		}
 
-	ret=pthread_create(&id_can1_read,NULL,(void *)task_can1_read,NULL);
-#if dug_can > 0		
-	if(ret!=0)
-		printf_va_args("prhtead can1read cread1");
-#endif
-}
-
-
-void can_info_process(void)
-{
-	int i = 0;
-	int j = 0;
-	int k = 0;
-	int m = 0;
-	uint8_t buffer[10];
-
-	for(i=0;i<CAN_CHANNEL_MAX;i++)
-	{			
-		for(j=0;j< can_channel[i].ucLogicChanNum;j++)
-		{			
-			for(k=0;k<can_channel[i].pt_logic_can[j]->ucSignalNum;k++)
+		is15765rcv = 0;
+		for(i=0;i<canid_diag_cnt[0];i++)
+		{
+			if(frdup.can_id == canid_diag_id[0][i])
 			{
-				if(getSystemTime() >= can_channel[i].pt_logic_can[j]->pt_signal[k]->dwNextCommTime)
+				//handle 15765
+				if(g_sys_info.state_T15==1)
 				{
-					ulFlashTxId[i] = can_channel[i].pt_logic_can[j]->dwTesterID;
-					ulFlashRxId[i] = can_channel[i].pt_logic_can[j]->dwEcuID;				
-					currenLogicChan = can_channel[i].pt_logic_can[j]->ucLogicChanIndex;
-					currentMSize = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
-					can_channel[i].pt_logic_can[j]->pt_signal[k]->dwNextCommTime = getSystemTime()+can_channel[i].pt_logic_can[j]->pt_signal[k]->wSampleCyc;						
-					currentlid = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID;
-					currentLidlen = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength;
-					buffer[0] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucRdDatSerID;
-					b15765rcv = 0;
-					switch(can_channel[i].pt_logic_can[j]->pt_signal[k]->ucRdDatSerID)
-					{
-						case 0x21:	//read data by LID
-						case 0x22:	//read data by LID
-							switch(can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength)									
-							{
-								case 1:
-									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID;
-									break;
-								case 2:
-									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8;
-									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
-									break;
-								default: break;
-							}
-							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength+1,(i<<2+j));	
-#if dug_can > 0
-							printf_va_args("CAN_Send15765,ulFlashTxId[%d]:%08x,%02x %02x %02x\n",i,ulFlashTxId[i],buffer[0],buffer[1],buffer[2]);
-#endif
-							break;
-						case 0x23:	//read data by MEM
-							switch(can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize) 								
-							{
-								case 1:
-									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID;
-									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
-									break;
-								case 2:
-									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8;
-									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
-									buffer[3] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
-									break;
-								case 3:
-									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>16;
-									buffer[2] = (can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8) & 0xFF;										
-									buffer[3] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
-									buffer[4] = can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize;
-									break;
-								default: break;
-							}
-							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize+2,(i<<2+j));
-#if dug_can
-							printf_va_args("CAN_Send15765,ulFlashTxId[%d]:%08x,:%02x %02x %02x %02x %02x\n",i,ulFlashTxId[i],buffer[0],buffer[1],buffer[2],buffer[3],buffer[4]);
-#endif
-							break;
-					}						
-									
-					m=500;
-					while((!b15765rcv) && m)
-					{
-						m--;
-						usleep(1000);
-					}				
-					
+					handle_15765(&frdup,0,i);
+					g_sys_info.state_can0_15765 = 1;
+					is15765rcv = 1;
 				}
-				else
+				break;
+			}
+		}	
+		//1939 frame
+		if((g_sys_info.state_T15==1)&&(is15765rcv == 0))
+		{
+			handle_1939(&frdup,0);
+			g_sys_info.state_can0_1939 = 1;
+		}
+
+
+	}	
+}
+
+
+static void task_can1_read()
+{
+	int ret;
+	fd_set rset;
+	int i;
+	char is15765rcv;
+	struct can_frame fr,frdup;
+
+	while(1)
+	{
+		FD_ZERO(&rset);
+		FD_SET(s_can1,&rset);
+		ret = read(s_can1,&frdup,sizeof(frdup));
+		led_Rx_blink(5);
+		upDateTime();	
+
+		if(ret<sizeof(frdup)){
+			return;
+		}
+		if(frdup.can_id & CAN_ERR_FLAG){
+			continue;
+		}
+
+		is15765rcv = 0;
+		for(i=0;i<canid_diag_cnt[1];i++)
+		{
+			if(frdup.can_id == canid_diag_id[1][i])
+			{
+				//handle 15765
+				if(g_sys_info.state_T15==1)
 				{
-					usleep(1000);
+					handle_15765(&frdup,1,i);
+					g_sys_info.state_can1_15765 = 1;
+					is15765rcv = 1;
 				}
+				break;
 			}
 		}
-	}
+	
+		//1939 frame
+		if((g_sys_info.state_T15==1)&&(is15765rcv == 0))
+		{
+			handle_1939(&frdup,1);
+			g_sys_info.state_can1_1939 = 1;
+		}
+	}	
 }
 
 
 void task_can(void)
 {
+    int ret;
+    pthread_t id_can0_read;
+	pthread_t id_can1_read;
 	pthread_t id_canTP;
 
 	USB_Flash_Status[0]=KWP_IDLE;
 	USB_Flash_Status[1]=KWP_IDLE;
 		
 	if(can_channel[0].bIsValid)
-		create_can0_task();
+	{
+		up_can0();
+		ret=pthread_create(&id_can0_read,NULL,(void *)task_can0_read,NULL);
+#if dug_can > 0 		
+		if(ret!=0)
+			printf_va_args("prhtead can0read created");
+#endif
+	}
 
 	if(can_channel[1].bIsValid)
-		create_can1_task();
+	{
+		up_can1();
+		ret=pthread_create(&id_can1_read,NULL,(void *)task_can1_read,NULL);
+#if dug_can > 0		
+		if(ret!=0)
+			printf_va_args("prhtead can1read created");
+#endif
+	}
 
 	pthread_create(&id_canTP,NULL,(void *)task_canTP,NULL);
 	
@@ -490,210 +426,364 @@ void task_can(void)
 
 
 
+void task_k(void)
+{	
+	static int fd_k = -1;
+	uint8_t i;
+	static uint32_t currentKlinelid = 0;
+	static uint8_t ucLogicKIndex = 0;
+	uint8_t kcommand[10];
+	uint8_t ktest[10];
+	int j;
+	ssize_t len;
+	int kCommandLen;
+	int rcvcnt;
+	#define BUF_SIZE 255
+	unsigned char pBuf[BUF_SIZE];
+	unsigned int overtime;
+	int Savedatalen;
+
+	while(1)
+	{		
+		if(g_sys_info.state_T15 == 0)
+		{
+			sleep(1);
+			continue;
+		}
+		if(g_isDownloadCfg)
+		{
+			sleep(1);
+			continue;
+		}
+		for(i=0; i<siganl_kline_num; i++)
+		{			
+			if((kline_config[0].bIsValid)&&(g_sys_info.state_T15==1))
+			{
+				switch(KlineInitState[0])
+				{
+					case K_INIT_BREAK:
+					{
+						memset(pBuf,0,BUF_SIZE);						
+						memcpy((void*)kcommand,(const void*)kline_config[0].ucInitFrmData,10);
+
+						if(fd_k > 0)
+						{
+							close(fd_k);
+						}
+						fd_k = OpenKline();
+						write(fd_k,(void*)kcommand,5);						
+						kline_TxState.length = 5;												
+						overtime = getSystemTime()+2000;
+						
+						rcvcnt = read_kfile(fd_k, pBuf, 5, overtime);
+						
+						if(pBuf[3] == (0x81+0x40))
+						{
+							KlineInitState[0] = K_INIT_OK;
+							k_rcv_last_time = getSystemTime();
+							
+						}
+						
+						if(overtime < getSystemTime())
+						{
+							KlineInitState[0] = K_TIMEOUT;
+							break;
+						}
+					}
+					break;
+						
+					case K_INIT_OK:
+					{
+						if((k_rcv_last_time + 5000) < getSystemTime())
+						{
+							KlineInitState[0] = K_TIMEOUT;							
+							break;
+						}
+						
+						if(kline_siganl[i].dwNextTime < getSystemTime())
+						{
+							currentKlinelid = kline_siganl[i].dwLocalID;
+                        	ucLogicKIndex = kline_siganl[i].ucLogicChanIndex;
+													
+							kcommand[1] = kline_config[0].ucInitFrmData[1];
+							kcommand[2] = kline_config[0].ucInitFrmData[2];							
+							kcommand[3] = kline_siganl[i].ucRdDatSerID;
+							
+							switch(kline_siganl[i].ucRdDatSerID)
+							{
+								case 0x23:
+									kcommand[0] = 0x85;									
+									kcommand[4] = 0xFF & (kline_siganl[i].dwLocalID >> 16);
+									kcommand[5] = 0xFF & (kline_siganl[i].dwLocalID >> 8);
+									kcommand[6] = 0xFF & (kline_siganl[i].dwLocalID);		
+									kcommand[7] = kline_siganl[i].ucMemSize;
+									kCommandLen = 8;
+									break;
+								case 0x21:									
+								case 0x22:
+									kcommand[0] = 0x82;
+									kcommand[4] = 0xFF & kline_siganl[i].dwLocalID;
+									kCommandLen = 5;
+									break;
+								default:
+									break;
+							}							
+							chksum(kcommand, kCommandLen);
+							write(fd_k,(void*)kcommand,kCommandLen+1);													
+							kline_siganl[i].dwNextTime = getSystemTime()+kline_siganl[i].wSampleCyc;
+
+							memset(pBuf,0,0xff);
+							overtime = getSystemTime()+1000;
+										
+							rcvcnt = read_kfile(fd_k, pBuf, (kCommandLen+1), overtime);																			
+
+							if(overtime < getSystemTime())
+							{
+								KlineInitState[0] = K_TIMEOUT;
+								break;
+							}							
+							//kline_RxState.dataLength = rcvcnt;
+							handl_K_rcvdata(pBuf,rcvcnt);
+							
+							upDateTime();
+							led_k_blink(2);
+
+							//***********************
+							//Savedatalen = kline_RxState.dataLength - 2;
+							Savedatalen = kline_RxState.dataLength - 1;  //???
+
+							if(kline_siganl[i].ucRdDatSerID != 0x23)
+							{
+								Savedatalen--;
+							}
+					        k15765buf.qdata[k15765buf.wp].data[0] = UP_DAQ_SIGNAL;
+					        k15765buf.qdata[k15765buf.wp].data[1] = SIGNAL_DIAG_KLINE;
+					        k15765buf.qdata[k15765buf.wp].data[2] = 0xFF & (Savedatalen+17-4); 
+					        k15765buf.qdata[k15765buf.wp].data[3] = (Savedatalen+17-4) >> 8;
+							
+					        k15765buf.qdata[k15765buf.wp].data[4] = 0xFF & currentKlinelid;
+					        k15765buf.qdata[k15765buf.wp].data[5] = 0xFF & (currentKlinelid>>8);
+					        k15765buf.qdata[k15765buf.wp].data[6] = 0xFF & (currentKlinelid>>16);
+					        k15765buf.qdata[k15765buf.wp].data[7] = 0xFF & (currentKlinelid>>24);
+
+						   	memcpy(&k15765buf.qdata[k15765buf.wp].data[8], (void*)&US_SECOND,4);
+							memcpy(&k15765buf.qdata[k15765buf.wp].data[12], (void*)&US_MILISECOND,2);
+
+							k15765buf.qdata[k15765buf.wp].data[14] = 0xFF & (Savedatalen);
+							k15765buf.qdata[k15765buf.wp].data[15] = Savedatalen >> 8; 							
+							k15765buf.qdata[k15765buf.wp].data[16] = kline_config[0].ucLogicChanIndex;
+
+							if(kline_siganl[i].ucRdDatSerID == 0x23)
+							{								
+								(void)memcpy(&k15765buf.qdata[k15765buf.wp].data[17],(const void *)(&pBuf[kline_RxState.headerLength+1]), Savedatalen);//add kline index
+							}
+							else
+							{
+								(void)memcpy(&k15765buf.qdata[k15765buf.wp].data[17],(const void *)(&pBuf[kline_RxState.headerLength+2]), Savedatalen);//add kline index
+							}
+							
+							k_rcv_last_time = getSystemTime();
+
+							k15765buf.qdata[k15765buf.wp].len = Savedatalen + 17;
+					        k15765buf.wp++;
+					        if(k15765buf.wp == K_RCV15765_QUEUE_SIZE)  k15765buf.wp = 0;    
+					        k15765buf.cnt++;
+							g_sys_info.state_k = 1;		
+						}
+					}
+					break;
+						
+					case K_TIMEOUT:
+					{
+						if(fd_k > 0)
+						{
+							close(fd_k);
+						}
+						KlineInitState[0] = K_INIT_BREAK;
+						fd_k = 0;
+					}
+					break;
+
+					default:
+					break;						
+				}
+			}
+		}
+		usleep(1000);		
+	}
+}	
 
 
-
-
-char cur3gfilename[100];
-int cur3gfilename_len;
-
-
-void HeartBeatReport(int sockfd,const struct sockaddr_in *addr,int len)
+void task_heartbeat(void)
 {
-	static int kline_break_cnt = 0;
-	
-	static int can0_1939_break_cnt = 0;
-	static int can1_1939_break_cnt = 0;
-	static int can0_15765_break_cnt = 0;
-	static int can1_15765_break_cnt = 0;
-	
-	char buf[MAX_SIZE]={0};
-	char Type = 0x6C;
-	char Reserve = 0x00;
-	//short DataLen = 8*6;
-	short DataLen = 8*7; //add edas_state
-	char time[8];
-	int cnt;
-	unsigned short gpsDataLen;
-	
-	buf[0] = Type;
-	buf[1] = Reserve;
-	memcpy(&buf[2],&DeviceID,4);
-	memcpy(&buf[6],&DataLen,2);
-
-	memcpy(&buf[8],&time,8);
-	memcpy(&buf[16],(void *)(&longitude),8);
-	memcpy(&buf[24],(void *)(&latitude),8);
-	memcpy(&buf[32],(void *)(&height),8);
-	memcpy(&buf[40],(void *)(&speed),8);
-	
-	memcpy(&buf[48],(void *)(&db_sd_free),8);
-	memcpy(&buf[56],(void *)(&g_sys_info),8);
-				
-
-	#if dug_3g > 0
-	printf_va_args("3g_latitude  = %f\n",longitude);
-	printf_va_args("3g_longitude = %f\n",latitude);
-	printf_va_args("3g_speed	  = %f\n",height);
-	printf_va_args("3g_height	  = %f\n",speed);
-	printf_va_args("3g_sd_free  = %d\n",db_sd_free);
-	#endif
-
-	chksum(buf,DataLen+8);
-	cnt = sendto(sockfd,buf,DataLen+9,0,(struct sockaddr *)addr,len);
-#if dug_3g > 0
-	printf_va_args("snd heartbeak,cnt:%d\n",cnt);
-#endif
-	if(g_sys_info.state_gps != 2)
-		g_sys_info.state_gps = 0;
-	if(g_sys_info.state_k != 2)
+	while(1)
 	{
-		if(g_sys_info.state_T15==1)
+		while(g_sys_info.state_3g != 1)
 		{
-			if(g_sys_info.state_k == 0)
-			{
-				kline_break_cnt++;
-				if(kline_break_cnt > 100)
-				{
-#if dug_3g > 0
-					printf_va_args("kline_break_reboot!\n");
-#endif
-					sleep(1);
-					system("reboot");
-				}
-			}
-			else
-			{
-				kline_break_cnt = 0;
-			}
+			sleep(1);
 		}
-		g_sys_info.state_k = 0;
+		sleep(5);
+		if(curMsgstate.state == MsgState_rcv)
+		{
+			Request_collect(sockfd,&g_addr,sizeof(struct sockaddr_in));
+		}
 		
+		sleep(5);
+		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
+		sleep(5);
+		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
+		sleep(5);
+		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
+		sleep(5);
+		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
 	}
-	if(g_sys_info.state_can0_1939 != 2)
-	{
-		if(g_sys_info.state_T15==1)
-		{
-			if(g_sys_info.state_can0_1939 == 0)
-			{
-				can0_1939_break_cnt++;
-				if(can0_1939_break_cnt > 100)
-				{
-#if dug_sys > 0
-					printf_va_args("can0_1939_break_reboot!\n");
-#endif
-					sleep(1);
-					system("reboot");
-				}
-			}
-			else
-			{
-				can0_1939_break_cnt = 0;
-			}
-		}
-		g_sys_info.state_can0_1939  = 0;
-	}
-	if(g_sys_info.state_can0_15765 != 2)
-	{
-		if(g_sys_info.state_T15==1)
-		{
-			if(g_sys_info.state_can0_15765 == 0)
-			{
-				can0_15765_break_cnt++;
-				if(can0_15765_break_cnt > 100)
-				{
-#if dug_sys > 0
-					printf_va_args("can0_15765_break_reboot!\n");
-#endif					
-					sleep(1);
-					system("reboot");
-				}
-			}
-			else
-			{
-				can0_15765_break_cnt = 0;
-			}
-		}
-		g_sys_info.state_can0_15765 = 0;
-	}
-	if(g_sys_info.state_can1_1939 != 2)
-	{
-		if(g_sys_info.state_T15==1)
-		{
-			if(g_sys_info.state_can1_1939 == 0)
-			{
-				can1_1939_break_cnt++;
-				if(can1_1939_break_cnt > 100)
-				{
-#if dug_sys > 0
-					printf_va_args("can1_1939_break_reboot!\n");
-#endif 
-					sleep(1);
-					system("reboot");
-				}
-			}
-			else
-			{
-				can1_1939_break_cnt = 0;
-			}
-		}
-		g_sys_info.state_can1_1939  = 0;
-	}
-	if(g_sys_info.state_can1_15765 != 2)
-	{
-		if(g_sys_info.state_T15==1)
-		{
-			if(g_sys_info.state_can1_15765 == 0)
-			{
-				can1_15765_break_cnt++;
-				if(can1_15765_break_cnt > 100)
-				{
-#if dug_sys > 0
-					printf_va_args("can1_15765_break_reboot!\n");
-#endif 
-					sleep(1);
-					system("reboot");
-				}
-			}
-			else
-			{
-				can1_15765_break_cnt = 0;
-			}
-		}
-		g_sys_info.state_can1_15765 = 0;
-	}
-	if((g_sys_info.state_T15==1)&&(isSaveGps == 1))
-	{
-		//save heartbeat data
-	}
-/////////////////////////////////
-		gpsDataLen = 32+8;
-		DataLen = gpsDataLen+12;
-		bps_buf.qdata[bps_buf.wp].data[0] = UP_DAQ_SIGNAL;
-        bps_buf.qdata[bps_buf.wp].data[1] = SIGNAL_GPS;
-        bps_buf.qdata[bps_buf.wp].data[2] = 0xFF & DataLen;
-        bps_buf.qdata[bps_buf.wp].data[3] = DataLen>>8;
-
-		bps_buf.qdata[bps_buf.wp].data[4] = 0x01;
-        bps_buf.qdata[bps_buf.wp].data[5] = 0x00;
-        bps_buf.qdata[bps_buf.wp].data[6] = 0x00;
-        bps_buf.qdata[bps_buf.wp].data[7] = 0x00;
-
-	   	memcpy(&bps_buf.qdata[bps_buf.wp].data[8],(void*)&US_SECOND,4);
-		memcpy(&bps_buf.qdata[bps_buf.wp].data[12],(void*)&US_MILISECOND,2);
-		
-		memcpy(&bps_buf.qdata[bps_buf.wp].data[14],&gpsDataLen,2);
-		
-		memcpy(&bps_buf.qdata[bps_buf.wp].data[16],(void*)&longitude,8);
-		memcpy(&bps_buf.qdata[bps_buf.wp].data[24],(void*)&latitude,8);
-		memcpy(&bps_buf.qdata[bps_buf.wp].data[32],(void*)&height,8);
-		memcpy(&bps_buf.qdata[bps_buf.wp].data[40],(void*)&speed,8);	        
-
-        bps_buf.qdata[bps_buf.wp].len = DataLen+4;
-        bps_buf.wp++;
-        if(bps_buf.wp == GPS_RCV_QUEUE_SIZE)  bps_buf.wp = 0;    
-        bps_buf.cnt++;
-////////////////////////////////	
 }
 
+//unsigned char rbuf[MAX_SIZE];
+
+void task_udprcv()
+{
+	unsigned int n_rcv;	
+	MsgInfo msg;
+	unsigned char *rbuf = NULL;
+	rbuf = (unsigned char *)malloc(1024);
+	if(NULL == rbuf)
+		exit(1);
+	
+	while(1)
+	{
+		while(g_sys_info.state_3g != 1)
+		{
+			sleep(1);
+		}
+		
+		bzero(rbuf,MAX_SIZE);
+		n_rcv = recvfrom(sockfd,rbuf,MAX_SIZE,0,NULL,NULL);		
+		g_sys_info.net_stat = 1;
+		g_Rcv3gCnt++;		
+		if(g_Rcv3gCnt > 0x1FFFFFFF) 
+		{
+			g_LastRcvCnt = 0;
+			g_Rcv3gCnt = 1;
+		}
+				
+		msg.len = n_rcv;
+		msg.ucServeId = rbuf[0];
+		memcpy(msg.ucBuff,rbuf,n_rcv);
+
+		if(checkdata(rbuf,n_rcv))
+		{
+			EnQueue(&msg_queue,&msg);
+		}
+	}
+
+	free(rbuf); 
+    	rbuf = NULL; 
+}
+
+
+void task_ChkSndFile(void)
+{
+	int i;
+	char filename[255];
+	int state;
+	static int noFileTransCnt = 0;
+	static int powerOffCnt = 0;
+
+	while(1)
+	{		
+		sleep(10);		
+		state = 0;		
+		pthread_mutex_lock(&g_file_mutex); 
+		for(i=0;i<filescnt;i++)
+		{
+			if(filesRecord[i].flag != 2)
+			{
+				curTransFile = i;
+				state = 1;
+				break;
+			}
+		}			
+		pthread_mutex_unlock(&g_file_mutex); 
+
+		if(state == 0)
+		{
+			noFileTransCnt++;
+		}
+		else
+		{
+			noFileTransCnt = 0;
+		}
+		
+#if dug_sys > 0 
+		printf_va_args("fileTransState:%d,curTransFile :%d,filescnt:%d,state:%d\n",fileTransState,curTransFile,filescnt,state);
+#endif 		
+		if(g_sys_info.state_T15 == 1)
+		{
+			powerOffCnt = 0;
+		}
+		else
+		{
+			if((noFileTransCnt > 3)&&(fileTransState == IDLE))
+			{
+				powerOffCnt++;
+				sleep(10);
+				if(powerOffCnt > 2)
+				{
+#if dug_sys > 0
+					printf_va_args("noFileTrans_reboot!\n");
+#endif
+					sleep(1);
+					system("reboot");
+				}
+					
+			}
+		}
+		
+		if((fileTransState == IDLE)&&(state == 1))
+		{
+			if(g_isDownloadCfg)
+			{
+				continue;
+			}
+
+#if dug_sys > 0			
+			printf_va_args("fileTransState :%d\n",fileTransState);
+#endif
+			if((curTransFile >= 0)&&(curTransFile <filescnt))
+			{				
+				memset(curTransFileName,0,255);
+				memcpy(curTransFileName,RECORDDIR,strlen(RECORDDIR));
+				memcpy(&curTransFileName[strlen(RECORDDIR)],filesRecord[i].filename,strlen(filesRecord[i].filename));
+
+				memset(cur3gfilename,0,100);
+				memcpy(cur3gfilename,filesRecord[i].filename,strlen(filesRecord[i].filename));
+				cur3gfilename_len = strlen(filesRecord[i].filename);	
+#if dug_sys > 0				
+				printf_va_args("curMsgstate.state :%d\n",curMsgstate.state);
+#endif				
+				if(curMsgstate.state == MsgState_rcv)
+				{
+					fp_curTrans = fopen(curTransFileName , "rb");
+					if(fp_curTrans == NULL)
+					{
+#if dug_sys > 0
+						printf_va_args("fopen failed\n");
+#endif
+					}
+					else
+					{
+						g_fp_curTrans_state = 1;
+					}
+					//printf_va_args_en(dug_3g,"1223_filename is :%s\n",curTransFileName);
+					Request_upfile(fp_curTrans,sockfd,&g_addr,sizeof(struct sockaddr_in));
+					fileTransState = REQUEST_UPFILE;
+				}
+				
+			}
+		}
+
+	}	
+	
+}
 

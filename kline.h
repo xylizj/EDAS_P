@@ -127,7 +127,7 @@ typedef struct
 
 extern KLINE_INIT_STATE KlineInitState[2];
 
-int OpenKline(void);
+extern int OpenKline(void);
 
 extern KLINE_TX_STATE_TYPE kline_TxState;
 extern KLINE_RX_STATE_TYPE kline_RxState;
@@ -135,6 +135,8 @@ extern uint32_t k_rcv_last_time;
 extern tK_RCV15765_QUEUE k15765buf;
 
 
+extern ssize_t read_kfile(int fd, unsigned char *buf, off_t offset, unsigned int to);
+extern void handl_K_rcvdata(unsigned char *pbuf,int len);
 
 
 

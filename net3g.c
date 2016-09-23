@@ -9,18 +9,27 @@
 
 #include <signal.h> 
 #include <sys/time.h> 
-#include "gpio.h"
-#include "common.h"
 
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <linux/socket.h>
 
+
+#include "gpio.h"
+#include "common.h"
+#include "recfile.h"
+#include "sd.h"
+#include "net3g.h"
+#include "readcfg.h"
+
+
 File_Trans_State fileTransState;
 
-
-extern struct sockaddr_in g_addr;
+tGPS_RCV_QUEUE g_gps_info;
+char cur3gfilename[100];
+int cur3gfilename_len;
+struct sockaddr_in g_addr;
 
 
 
@@ -87,150 +96,7 @@ int GetNetStat( )
 
 
 
-
-//char curnetstat= -1;
-
-int detect3g = 0;
-int is3gvalid = 0;
-int is3gsocket = 0;
-
-
-char curTransFileName[255];
-FILE *fp_curTrans;
-int g_fp_curTrans_state = -1;
-
-void HeartBeatReport(int sockfd,const struct sockaddr_in *addr,int len);
-void task_heartbeat()
-{
-	while(1)
-	{
-		while(g_sys_info.state_3g != 1)
-		{
-			sleep(1);
-		}
-		sleep(5);
-		if(curMsgstate.state == MsgState_rcv)
-		{
-			Request_collect(sockfd,&g_addr,sizeof(struct sockaddr_in));
-		}
-		
-		sleep(5);
-		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
-		sleep(5);
-		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
-		sleep(5);
-		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
-		sleep(5);
-		HeartBeatReport(sockfd,&g_addr,sizeof(struct sockaddr_in));
-	}
-}
-
-int powerOffCnt = 0;
-int noFileTransCnt = 0;
-void task_ChkSndFile()
-{
-	int i;
-	char filename[255];
-	int state;
-
-	while(1)
-	{		
-		sleep(10);		
-		state = 0;		
-		pthread_mutex_lock(&g_file_mutex); 
-		for(i=0;i<filescnt;i++)
-		{
-			if(filesRecord[i].flag != 2)
-			{
-				curTransFile = i;
-				state = 1;
-				break;
-			}
-		}			
-		pthread_mutex_unlock(&g_file_mutex); 
-
-		if(state == 0)
-		{
-			noFileTransCnt++;
-		}
-		else
-		{
-			noFileTransCnt = 0;
-		}
-		
-#if dug_sys > 0 
-		printf_va_args("fileTransState:%d,curTransFile :%d,filescnt:%d,state:%d\n",fileTransState,curTransFile,filescnt,state);
-#endif 		
-		if(g_sys_info.state_T15 == 1)
-		{
-			powerOffCnt = 0;
-		}
-		else
-		{
-			if((noFileTransCnt > 3)&&(fileTransState == IDLE))
-			{
-				powerOffCnt++;
-				sleep(10);
-				if(powerOffCnt > 2)
-				{
-#if dug_sys > 0
- 					printf_va_args("noFileTrans_reboot!\n");
-#endif
-					sleep(1);
-					system("reboot");
-				}
-					
-			}
-		}
-		
-		if((fileTransState == IDLE)&&(state == 1))
-		{
-			if(g_isDownloadCfg)
-			{
-				continue;
-			}
-
-#if dug_sys > 0			
-			printf_va_args("fileTransState :%d\n",fileTransState);
-#endif
-			if((curTransFile >= 0)&&(curTransFile <filescnt))
-			{				
-				memset(curTransFileName,0,255);
-				memcpy(curTransFileName,RECORDDIR,strlen(RECORDDIR));
-				memcpy(&curTransFileName[strlen(RECORDDIR)],filesRecord[i].filename,strlen(filesRecord[i].filename));
-
-				memset(cur3gfilename,0,100);
-				memcpy(cur3gfilename,filesRecord[i].filename,strlen(filesRecord[i].filename));
-				cur3gfilename_len = strlen(filesRecord[i].filename);	
-#if dug_sys > 0				
-				printf_va_args("curMsgstate.state :%d\n",curMsgstate.state);
-#endif				
-				if(curMsgstate.state == MsgState_rcv)
-				{
-					fp_curTrans = fopen(curTransFileName , "rb");
-					if(fp_curTrans == NULL)
-					{
-#if dug_sys > 0
-						printf_va_args("fopen failed\n");
-#endif
-					}
-					else
-					{
-						g_fp_curTrans_state = 1;
-					}
-					//printf_va_args_en(dug_3g,"1223_filename is :%s\n",curTransFileName);
-					Request_upfile(fp_curTrans,sockfd,&g_addr,sizeof(struct sockaddr_in));
-					fileTransState = REQUEST_UPFILE;
-				}
-				
-			}
-		}
-
-	}	
-	
-}
-
-void reinit_3g_net()
+void reinit_3g_net(void)
 {
 	int port = 5888;
 	int pid;
@@ -290,3 +156,213 @@ void init_3g_net(void)
 }
 
 
+
+//char curnetstat= -1;
+
+int detect3g = 0;
+int is3gvalid = 0;
+int is3gsocket = 0;
+
+
+char curTransFileName[255];
+FILE *fp_curTrans;
+int g_fp_curTrans_state = -1;
+
+
+void HeartBeatReport(int sockfd,const struct sockaddr_in *addr,int len)
+{
+	static int kline_break_cnt = 0;
+	
+	static int can0_1939_break_cnt = 0;
+	static int can1_1939_break_cnt = 0;
+	static int can0_15765_break_cnt = 0;
+	static int can1_15765_break_cnt = 0;
+	
+	char buf[MAX_SIZE]={0};
+	char Type = 0x6C;
+	char Reserve = 0x00;
+	//short DataLen = 8*6;
+	short DataLen = 8*7; //add edas_state
+	char time[8];
+	int cnt;
+	unsigned short gpsDataLen;
+	
+	buf[0] = Type;
+	buf[1] = Reserve;
+	memcpy(&buf[2],&DeviceID,4);
+	memcpy(&buf[6],&DataLen,2);
+
+	memcpy(&buf[8],&time,8);
+	memcpy(&buf[16],(void *)(&longitude),8);
+	memcpy(&buf[24],(void *)(&latitude),8);
+	memcpy(&buf[32],(void *)(&height),8);
+	memcpy(&buf[40],(void *)(&speed),8);
+	
+	memcpy(&buf[48],(void *)(&db_sd_free),8);
+	memcpy(&buf[56],(void *)(&g_sys_info),8);
+				
+
+#if dug_3g > 0
+	printf_va_args("3g_latitude  = %f\n",longitude);
+	printf_va_args("3g_longitude = %f\n",latitude);
+	printf_va_args("3g_speed	  = %f\n",height);
+	printf_va_args("3g_height	  = %f\n",speed);
+	printf_va_args("3g_sd_free	= %d\n",db_sd_free);
+#endif
+
+	chksum(buf,DataLen+8);
+	cnt = sendto(sockfd,buf,DataLen+9,0,(struct sockaddr *)addr,len);
+#if dug_3g > 0
+	printf_va_args("snd heartbeak,cnt:%d\n",cnt);
+#endif
+	if(g_sys_info.state_gps != 2)
+		g_sys_info.state_gps = 0;
+	if(g_sys_info.state_k != 2)
+	{
+		if(g_sys_info.state_T15==1)
+		{
+			if(g_sys_info.state_k == 0)
+			{
+				kline_break_cnt++;
+				if(kline_break_cnt > 100)
+				{
+#if dug_3g > 0
+					printf_va_args("kline_break_reboot!\n");
+#endif
+					sleep(1);
+					system("reboot");
+				}
+			}
+			else
+			{
+				kline_break_cnt = 0;
+			}
+		}
+		g_sys_info.state_k = 0;
+		
+	}
+	if(g_sys_info.state_can0_1939 != 2)
+	{
+		if(g_sys_info.state_T15==1)
+		{
+			if(g_sys_info.state_can0_1939 == 0)
+			{
+				can0_1939_break_cnt++;
+				if(can0_1939_break_cnt > 100)
+				{
+#if dug_sys > 0
+					printf_va_args("can0_1939_break_reboot!\n");
+#endif
+					sleep(1);
+					system("reboot");
+				}
+			}
+			else
+			{
+				can0_1939_break_cnt = 0;
+			}
+		}
+		g_sys_info.state_can0_1939	= 0;
+	}
+	if(g_sys_info.state_can0_15765 != 2)
+	{
+		if(g_sys_info.state_T15==1)
+		{
+			if(g_sys_info.state_can0_15765 == 0)
+			{
+				can0_15765_break_cnt++;
+				if(can0_15765_break_cnt > 100)
+				{
+#if dug_sys > 0
+					printf_va_args("can0_15765_break_reboot!\n");
+#endif					
+					sleep(1);
+					system("reboot");
+				}
+			}
+			else
+			{
+				can0_15765_break_cnt = 0;
+			}
+		}
+		g_sys_info.state_can0_15765 = 0;
+	}
+	if(g_sys_info.state_can1_1939 != 2)
+	{
+		if(g_sys_info.state_T15==1)
+		{
+			if(g_sys_info.state_can1_1939 == 0)
+			{
+				can1_1939_break_cnt++;
+				if(can1_1939_break_cnt > 100)
+				{
+#if dug_sys > 0
+					printf_va_args("can1_1939_break_reboot!\n");
+#endif 
+					sleep(1);
+					system("reboot");
+				}
+			}
+			else
+			{
+				can1_1939_break_cnt = 0;
+			}
+		}
+		g_sys_info.state_can1_1939	= 0;
+	}
+	if(g_sys_info.state_can1_15765 != 2)
+	{
+		if(g_sys_info.state_T15==1)
+		{
+			if(g_sys_info.state_can1_15765 == 0)
+			{
+				can1_15765_break_cnt++;
+				if(can1_15765_break_cnt > 100)
+				{
+#if dug_sys > 0
+					printf_va_args("can1_15765_break_reboot!\n");
+#endif 
+					sleep(1);
+					system("reboot");
+				}
+			}
+			else
+			{
+				can1_15765_break_cnt = 0;
+			}
+		}
+		g_sys_info.state_can1_15765 = 0;
+	}
+	if((g_sys_info.state_T15==1)&&(isSaveGps == 1))
+	{
+		//save heartbeat data
+	}
+
+		gpsDataLen = 32+8;
+		DataLen = gpsDataLen+12;
+		g_gps_info.qdata[g_gps_info.wp].data[0] = UP_DAQ_SIGNAL;
+		g_gps_info.qdata[g_gps_info.wp].data[1] = SIGNAL_GPS;
+		g_gps_info.qdata[g_gps_info.wp].data[2] = 0xFF & DataLen;
+		g_gps_info.qdata[g_gps_info.wp].data[3] = DataLen>>8;
+
+		g_gps_info.qdata[g_gps_info.wp].data[4] = 0x01;
+		g_gps_info.qdata[g_gps_info.wp].data[5] = 0x00;
+		g_gps_info.qdata[g_gps_info.wp].data[6] = 0x00;
+		g_gps_info.qdata[g_gps_info.wp].data[7] = 0x00;
+
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[8],(void*)&US_SECOND,4);
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[12],(void*)&US_MILISECOND,2);
+		
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[14],&gpsDataLen,2);
+		
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[16],(void*)&longitude,8);
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[24],(void*)&latitude,8);
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[32],(void*)&height,8);
+		memcpy(&g_gps_info.qdata[g_gps_info.wp].data[40],(void*)&speed,8);			
+
+		g_gps_info.qdata[g_gps_info.wp].len = DataLen+4;
+		g_gps_info.wp++;
+		if(g_gps_info.wp == GPS_RCV_QUEUE_SIZE)  g_gps_info.wp = 0;	 
+		g_gps_info.cnt++;
+////////////////////////////////	
+}
