@@ -2,8 +2,9 @@
 #define __TASK_H_
 
 extern void task_sd(void);
-extern void task_canTP(void);
 extern void task_can(void);
+extern void task_gps(void);
+
 
 
 

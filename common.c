@@ -63,7 +63,7 @@ int latitude_du;
 int longitude_du;
 
 //char T15_state;
-volatile tEDAS_P_STATE g_edas_state;
+volatile tEDAS_P_STATE g_sys_info;
 char CAR_ID[40] = "E0801"; //for DBTS
 char g_ServerIP[20];
 char g_ServerPort[10];
@@ -295,15 +295,15 @@ int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free)
 
 void init_edas_state(void)
 {
-	g_edas_state.state_T15 = 1;
-	g_edas_state.state_3g = 0;
-	g_edas_state.net_stat = -1;
-	g_edas_state.state_gps        = 2;
-	g_edas_state.state_k          = 2;
-	g_edas_state.state_can0_1939  = 2;
-	g_edas_state.state_can0_15765 = 2;
-	g_edas_state.state_can1_1939  = 2;
-	g_edas_state.state_can1_15765 = 2;
+	g_sys_info.state_T15 = 1;
+	g_sys_info.state_3g = 0;
+	g_sys_info.net_stat = -1;
+	g_sys_info.state_gps        = 2;
+	g_sys_info.state_k          = 2;
+	g_sys_info.state_can0_1939  = 2;
+	g_sys_info.state_can0_15765 = 2;
+	g_sys_info.state_can1_1939  = 2;
+	g_sys_info.state_can1_15765 = 2;
 }
 
 void init_user_mutex(void)

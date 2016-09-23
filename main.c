@@ -19,25 +19,62 @@
 #include <time.h>
 
 
-#include "sd.h"
-#include "boot.h"
-#include "can.h"
-#include "readcfg.h"
-#include "kline.h"
-#include "gpio.h"
-#include "net3g.h"
-#include "rtc.h"
-#include "upload_file.h"
-
 #include "common.h"
 #include "queue.h"
+
+#include "sd.h"
+#include "boot.h"
+#include "readcfg.h"
+
+#include "gpio.h"
+#include "rtc.h"
+
+#include "can.h"
+#include "kline.h"
+#include "net3g.h"
+
+#include "upload_file.h"
+
 #include "task.h"
 #include "power_monitor.h"
 
 
 
 
+void net_to_manage(void)
+{
+	static unsigned int g_TimeoutCnt = 0;
 
+	if(g_Rcv3gCnt > g_LastRcvCnt)
+	{
+		g_LastRcvCnt = g_Rcv3gCnt;
+		g_TimeoutCnt = 0;
+		g_3gTryCnt = 0;
+	}
+	else/*3g timeout*/
+	{
+		g_TimeoutCnt++;
+		if(g_TimeoutCnt >= 2)
+		{			
+			g_sys_info.net_stat = 0;
+			if(g_sys_info.pppd_pid > 0)  //kill pppd
+			{
+				char killcmd[50];
+				g_sys_info.state_3g = 0;									
+				makeKillCommand(killcmd,g_sys_info.pppd_pid);
+				system(killcmd);
+				sleep(1);
+				waitpid(g_sys_info.pppd_pid,NULL,0);				
+				sleep(5);					
+				start3G();
+				reinit_3g_net();
+				g_sys_info.state_3g = 1;
+				g_TimeoutCnt = 0;
+			}				
+		}
+		power_monitor();
+	}
+}
 
 
 void main(int argc,char *argv[])
@@ -70,7 +107,7 @@ void main(int argc,char *argv[])
 	#if	CFG_3G_ENABLE
 	init_3g_net();
 	#endif
-	g_edas_state.state_3g = 1;
+	g_sys_info.state_3g = 1;
 	ret=pthread_create(&id_can,       NULL,(void *)task_can,        NULL);
 	ret=pthread_create(&id_k,         NULL,(void *)task_k,          NULL);
 	ret=pthread_create(&id_sd,        NULL,(void *)task_sd,         NULL);
@@ -93,43 +130,7 @@ void main(int argc,char *argv[])
 		g_SysCnt++;
 		if((g_SysCnt % 120) == 0) //500ms * 120 = 1min
 		{
-			static unsigned int g_TimeoutCnt = 0;
-			
-			#if	CFG_3G_ENABLE
-			if(g_Rcv3gCnt > g_LastRcvCnt)
-			{
-				g_LastRcvCnt = g_Rcv3gCnt;
-				g_TimeoutCnt = 0;
-				g_3gTryCnt = 0;
-			}
-			else/*3g timeout*/
-			#endif
-			{
-				#if	CFG_3G_ENABLE
-				g_TimeoutCnt++;
-				if(g_TimeoutCnt < 2)
-				{
-					continue;
-				}
-				
-				g_edas_state.net_stat = 0;
-				if(g_edas_state.pppd_pid > 0)  //kill pppd
-				{
-					char killcmd[50];
-					g_edas_state.state_3g = 0;									
-					makeKillCommand(killcmd,g_edas_state.pppd_pid);
-					system(killcmd);
-					sleep(1);
-					waitpid(g_edas_state.pppd_pid,NULL,0);				
-					sleep(5);					
-					start3G();
-					reinit_3g_net();
-					g_edas_state.state_3g = 1;
-					g_TimeoutCnt = 0;
-				}
-				#endif
-				power_monitor();
-			}			
+			net_to_manage();			
 		}
 	}
 

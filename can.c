@@ -319,20 +319,20 @@ void task_can0_read()
 			if(frdup.can_id == canid_diag_id[0][i])
 			{
 				//handle 15765
-				if(g_edas_state.state_T15==1)
+				if(g_sys_info.state_T15==1)
 				{
 					handle_15765(&frdup,0,i);
-					g_edas_state.state_can0_15765 = 1;
+					g_sys_info.state_can0_15765 = 1;
 					is15765rcv = 1;
 				}
 				break;
 			}
 		}	
 		//1939 frame
-		if((g_edas_state.state_T15==1)&&(is15765rcv == 0))
+		if((g_sys_info.state_T15==1)&&(is15765rcv == 0))
 		{
 			handle_1939(&frdup,0);
-			g_edas_state.state_can0_1939 = 1;
+			g_sys_info.state_can0_1939 = 1;
 		}
 
 
@@ -368,10 +368,10 @@ void task_can1_read()
 			if(frdup.can_id == canid_diag_id[1][i])
 			{
 				//handle 15765
-				if(g_edas_state.state_T15==1)
+				if(g_sys_info.state_T15==1)
 				{
 					handle_15765(&frdup,1,i);
-					g_edas_state.state_can1_15765 = 1;
+					g_sys_info.state_can1_15765 = 1;
 					is15765rcv = 1;
 				}
 				break;
@@ -380,10 +380,10 @@ void task_can1_read()
 
 	
 		//1939 frame
-		if((g_edas_state.state_T15==1)&&(is15765rcv == 0))
+		if((g_sys_info.state_T15==1)&&(is15765rcv == 0))
 		{
 			handle_1939(&frdup,1);
-			g_edas_state.state_can1_1939 = 1;
+			g_sys_info.state_can1_1939 = 1;
 		}
 
 

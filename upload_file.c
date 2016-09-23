@@ -611,7 +611,7 @@ void task_udprcv()
 	MsgInfo msg;
 	while(1)
 	{
-		while(g_edas_state.state_3g != 1)
+		while(g_sys_info.state_3g != 1)
 		{
 			sleep(1);
 		}
@@ -620,7 +620,7 @@ void task_udprcv()
 		n_rcv = 0;
 		bzero(rbuf,MAX_SIZE);
 		n_rcv=recvfrom(sockfd,rbuf,MAX_SIZE,0,NULL,NULL);		
-		g_edas_state.net_stat = 1;
+		g_sys_info.net_stat = 1;
 		g_Rcv3gCnt++;
 		
 		if(g_Rcv3gCnt > 0x1FFFFFFF) 
@@ -649,7 +649,7 @@ int uploadingfile(FILE *fp,int sockfd,const struct sockaddr_in *addr,int len)
 		{
 			while(OffsetState != 4)
 			{			
-				if((fp_curfile_t == fp)&&(g_edas_state.state_T15))
+				if((fp_curfile_t == fp)&&(g_sys_info.state_T15))
 				{
 					return 0;
 				}

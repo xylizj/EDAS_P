@@ -170,7 +170,7 @@ void task_k()
 	
 	while(1)
 	{		
-		if(g_edas_state.state_T15 == 0)
+		if(g_sys_info.state_T15 == 0)
 		{
 			sleep(1);
 			continue;
@@ -182,7 +182,7 @@ void task_k()
 		}
 		for(i=0;i<siganl_kline_num;i++)
 		{			
-			if((kline_config[0].bIsValid)&&(g_edas_state.state_T15==1))
+			if((kline_config[0].bIsValid)&&(g_sys_info.state_T15==1))
 			{
 				switch(KlineInitState[0])
 				{
@@ -385,7 +385,7 @@ void task_k()
 					        k15765buf.wp++;
 					        if(k15765buf.wp == K_RCV15765_QUEUE_SIZE)  k15765buf.wp = 0;    
 					        k15765buf.cnt++;
-							g_edas_state.state_k = 1;
+							g_sys_info.state_k = 1;
 						//************************								
 
 						}

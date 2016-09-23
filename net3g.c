@@ -104,7 +104,7 @@ void task_heartbeat()
 {
 	while(1)
 	{
-		while(g_edas_state.state_3g != 1)
+		while(g_sys_info.state_3g != 1)
 		{
 			sleep(1);
 		}
@@ -161,7 +161,7 @@ void task_ChkSndFile()
 #if dug_sys > 0 
 		printf_va_args("fileTransState:%d,curTransFile :%d,filescnt:%d,state:%d\n",fileTransState,curTransFile,filescnt,state);
 #endif 		
-		if(g_edas_state.state_T15 == 1)
+		if(g_sys_info.state_T15 == 1)
 		{
 			powerOffCnt = 0;
 		}
@@ -248,7 +248,7 @@ void reinit_3g_net()
 	}
 	else
 	{		
-		g_edas_state.pppd_pid = pid;		
+		g_sys_info.pppd_pid = pid;		
 		sleep(25);
 		}
 	}
@@ -276,7 +276,7 @@ void init_3g_net(void)
 	}
 	else
 	{	
-		g_edas_state.pppd_pid = pid;		
+		g_sys_info.pppd_pid = pid;		
 		sleep(25);
 		sockfd=socket(AF_INET,SOCK_DGRAM,0);
 		

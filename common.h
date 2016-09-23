@@ -9,8 +9,8 @@
 #define FileDeviceName "/devicename.txt"
 
 
-#define CFG_3G_ENABLE 	1
-#define CFG_GPS_ENABLE	1
+#define CFG_3G_ENABLE 1
+#define CFG_GPS_ENABLE 1
 
 
 
@@ -34,14 +34,6 @@
 #define DUG_KLINE 	1
 
 
-//debug para:
-/*extern char dug_readcfg;
-extern char dug_gps;
-extern char dug_can;
-extern char dug_k;
-extern char dug_3g;
-extern char dug_rtc;
-extern char dug_sd;*/
 
 #define  dug_readcfg	1
 #define  dug_gps		1
@@ -123,7 +115,7 @@ typedef struct
 }tEDAS_P_STATE;
 
 typedef unsigned char 		uint8_t;
-typedef unsigned short      uint16_t;
+typedef unsigned short int       uint16_t;
 typedef unsigned int 		uint32_t;
 typedef unsigned int    	BOOL;
 typedef unsigned char 		BYTE;
@@ -201,7 +193,7 @@ extern char g_ServerPort[10];
 
 
 extern bool g_isDownloadCfg;
-extern volatile tEDAS_P_STATE g_edas_state;
+extern volatile tEDAS_P_STATE g_sys_info;
 extern volatile unsigned int g_read_cur_offset;
 extern char g_rtc_state;
 

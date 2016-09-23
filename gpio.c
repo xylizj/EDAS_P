@@ -165,16 +165,3 @@ void led_Tx_blink(int num)
 	}
 	
 }
-
-void task_wd()
-{
-	while(1)
-	{
-		edas_wd_on();
-		usleep(50000);
-		edas_wd_off();
-		usleep(50000);
-	}
-}
-
-

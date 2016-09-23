@@ -4,7 +4,7 @@
 
 void led_func(void)
 {			
-	if(g_edas_state.net_stat==1)
+	if(g_sys_info.net_stat==1)
 	{
 		led_usb_blink();
 	}

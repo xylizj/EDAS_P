@@ -5,10 +5,8 @@ unsigned int g_3gTryCnt;
 
 void power_monitor(void)
 {
-	
-
-	g_edas_state.state_T15 = is_T15_on();
-	if(g_edas_state.state_T15 == 0)  //if t15 down and 3g cannot reach, reboot system!
+	g_sys_info.state_T15 = is_T15_on();
+	if(g_sys_info.state_T15 == 0)  //if t15 down and 3g cannot reach, reboot system!
 	{
 		g_3gTryCnt++;
 		if(g_3gTryCnt > 20)//20min

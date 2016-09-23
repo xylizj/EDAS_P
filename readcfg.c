@@ -392,11 +392,11 @@ static int ReadCfg(void)
 								
 								if((ucLogicIndex>>4)==0)
 								{
-									g_edas_state.state_can0_15765 = 0;									
+									g_sys_info.state_can0_15765 = 0;									
 								}
 								else if((ucLogicIndex>>4)==1)
 								{
-									g_edas_state.state_can1_15765 = 0;									
+									g_sys_info.state_can1_15765 = 0;									
 								}
 								//My_Printf(dug_readcfg,"SIGNAL_DIAG_CAN:%d\n",signal_can_num);								
 								break;
@@ -412,7 +412,7 @@ static int ReadCfg(void)
 								//printf_va_args_en(dug_readcfg,"ucLogicChanIndex:0x%02x\n",kline_siganl[siganl_kline_num].ucLogicChanIndex);
 								//printf_va_args_en(dug_readcfg,"wSampleCyc:%d\n",kline_siganl[siganl_kline_num].wSampleCyc);
                             	siganl_kline_num++;
-								g_edas_state.state_k = 0;						
+								g_sys_info.state_k = 0;						
 								break;
 							case SIGNAL_EXTERNAL:
 								break;
@@ -439,18 +439,18 @@ static int ReadCfg(void)
 								canfcnt[cchan]++;
 								if(cchan == 0)
 								{
-									g_edas_state.state_can0_1939 = 0;
+									g_sys_info.state_can0_1939 = 0;
 								}
 								else
 								{
-									g_edas_state.state_can1_1939 = 0;
+									g_sys_info.state_can1_1939 = 0;
 								}								
 								CAN_1939_num++;
 								break;
 							case SIGNAL_GPS:
 								isSaveGps = data[0];
 								if(isSaveGps)
-									g_edas_state.state_gps = 0;
+									g_sys_info.state_gps = 0;
 								break;
 							case SIGNAL_AUTH_CODE:
 								memcpy(&auth_code[8],&data[0],300);								
