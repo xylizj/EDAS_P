@@ -1,7 +1,3 @@
-#include "common.h"
-#include "readcfg.h"
-#include "kline.h"
-
 #include <stdio.h>
 #include <stdlib.h> 
 #include <unistd.h>  
@@ -13,7 +9,14 @@
 #include <limits.h> 
 #include <asm/ioctls.h>
 #include <time.h>
-#include "edas_gpio.h"
+#include <string.h>
+
+
+#include "gpio.h"
+#include "common.h"
+#include "readcfg.h"
+#include "kline.h"
+
 
 
 #define DATA_LEN                0xFF 
@@ -79,7 +82,9 @@ int OpenKline(void)
 	//tcgetattr(fd_k, &opt); 
 	if(tcgetattr(fd_k, &opt)<0)
 	{
-		My_Printf(dug_k,"kline tcgetattr error\n");
+#if dug_k > 0
+		printf_va_args("kline tcgetattr error\n");
+#endif
 		return 0;
 	}
 	cfsetispeed(&opt, B10400);
@@ -135,15 +140,14 @@ void handl_K_rcvdata(unsigned char *pbuf,int len)
         kline_RxState.dataLength = pbuf[3];      
     }	
 
-	if(dug_k)
+#if(dug_k > 0)
+	printf_va_args("kline recv %d:",kline_RxState.dataLength);
+	for(i=0;i<len;i++)
 	{
-		My_Printf(dug_k,"kline recv %d:",kline_RxState.dataLength);
-		for(i=0;i<len;i++)
-		{
-			My_Printf(dug_k," %02x ",pbuf[i]);
-		}
-		My_Printf(dug_k,"\n");
+		printf_va_args(" %02x ",pbuf[i]);
 	}
+	printf_va_args("\n");
+#endif
 }
 void task_k()
 {	
@@ -166,7 +170,7 @@ void task_k()
 	
 	while(1)
 	{		
-		if(T15_state == 0)
+		if(g_edas_state.state_T15 == 0)
 		{
 			sleep(1);
 			continue;
@@ -178,7 +182,7 @@ void task_k()
 		}
 		for(i=0;i<siganl_kline_num;i++)
 		{			
-			if((kline_config[0].bIsValid)&&(T15_state==1))
+			if((kline_config[0].bIsValid)&&(g_edas_state.state_T15==1))
 			{
 				switch(KlineInitState[0])
 				{
@@ -188,11 +192,12 @@ void task_k()
 
 						readflag = 0;
 						OpenKline();
+#if (dug_k > 0)
 						if(fd_k<0)
 						{
-							My_Printf(dug_k,"open kline error\n");
+							printf_va_args("open kline error\n");
 						}
-						
+#endif						
 						write(fd_k,(void*)kcommand,5);
 						readflag = 1;												
 						
@@ -245,7 +250,9 @@ void task_k()
 						if(k_rcv_last_time + 5000 < getSystemTime())
 						{
 							KlineInitState[0] = K_TIMEOUT;							
-							My_Printf(dug_k,"K_INIT_OK timeout!\n");
+#if (dug_k > 0)
+							printf_va_args("K_INIT_OK timeout!\n");
+#endif
 							break;
 						}
 						
@@ -281,15 +288,16 @@ void task_k()
 								s += kcommand[j];
 							kcommand[kCommandLen] = (uint8_t)(0xFF & s);
 							write(fd_k,(void*)kcommand,kCommandLen+1);
-							if(dug_k)
+
+#if (dug_k > 0)
+							printf_va_args("Ksend:");
+
+							for(d=0;d<kCommandLen+1;d++)
 							{
-								My_Printf(dug_k,"Ksend:");
-								for(d=0;d<kCommandLen+1;d++)
-								{
-									My_Printf(dug_k," %02x",kcommand[d]);
-								}
-								My_Printf(dug_k,"\n");
+								printf_va_args(" %02x",kcommand[d]);
 							}
+							printf_va_args("\n");
+#endif
 														
 							kline_siganl[i].dwNextTime = getSystemTime()+kline_siganl[i].wSampleCyc;
 
@@ -354,8 +362,8 @@ void task_k()
 					        k15765buf.qdata[k15765buf.wp].data[6] = 0xFF & (currentKlinelid>>16);
 					        k15765buf.qdata[k15765buf.wp].data[7] = 0xFF & (currentKlinelid>>24);
 
-						   	memcpy(&k15765buf.qdata[k15765buf.wp].data[8],&US_SECOND,4);
-							memcpy(&k15765buf.qdata[k15765buf.wp].data[12],&US_MILISECOND,2);
+						   	memcpy(&k15765buf.qdata[k15765buf.wp].data[8], (void*)&US_SECOND,4);
+							memcpy(&k15765buf.qdata[k15765buf.wp].data[12], (void*)&US_MILISECOND,2);
 
 							k15765buf.qdata[k15765buf.wp].data[14] = 0xFF & (Savedatalen);
 							k15765buf.qdata[k15765buf.wp].data[15] = Savedatalen >> 8; 							

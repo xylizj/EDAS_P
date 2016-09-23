@@ -22,9 +22,9 @@
 #include "can.h"
 #include "readcfg.h"
 #include "kline.h"
-#include "edas_gpio.h"
+#include "gpio.h"
 #include "readcfg.h"
-#include "edas_gpio.h"
+#include "gpio.h"
 
 
 int s_can0,s_can1;
@@ -178,21 +178,20 @@ static void handle_1939(struct can_frame *fr,int chan)
 	//memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[4],&(fr->can_id),4);
 	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[4],&temp_id,4);
 	
-	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[8],&US_SECOND,4);
-	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[12],&US_MILISECOND,2);
+	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[8],(void*)&US_SECOND,4);
+	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[12],(void*)&US_MILISECOND,2);
 	can1939buf[chan].qdata[can1939buf[chan].wp].data[14] = chan<<4;  //物理通道
 	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[15],&fr->data[0],8);
 	can1939buf[chan].qdata[can1939buf[chan].wp].len = 23;
 
-	if(dug_can)
+#if dug_can > 0 
+	printf_va_args("can%drcv1939:",chan);
+	for(i=0;i<23;i++)
 	{
-		My_Printf(dug_can,"can%drcv1939:",chan);
-		for(i=0;i<23;i++)
-		{
-			My_Printf(dug_can,"%02x ",can1939buf[chan].qdata[can1939buf[chan].wp].data[i]);
-		}
-		My_Printf(dug_can,"\n");
+		printf_va_args("%02x ",can1939buf[chan].qdata[can1939buf[chan].wp].data[i]);
 	}
+	printf_va_args("\n");
+#endif
 
 	can1939buf[chan].wp++;
 	if(can1939buf[chan].wp == CAN_RCV1939_QUEUE_SIZE)  can1939buf[chan].wp = 0;    
@@ -211,8 +210,8 @@ static void handle_15765(struct can_frame *fr,int chan,int msg_no)
     (void)memset(&rxbuf,0, sizeof(rxbuf));
     rxbuf.id.l=fr->can_id;
     rxbuf.dl=(uint8_t)fr->can_dlc; 
-    (void)memcpy(&rxbuf.data[0],(const void *)&fr->data[0],8);         
-    (void)memcpy(&inq[Lchan].data[inq[Lchan].wp], (const void *)&rxbuf, 16);
+    (void)memcpy((void*)&rxbuf.data[0],(const void *)&fr->data[0],8);         
+    (void)memcpy((void*)&inq[Lchan].data[inq[Lchan].wp], (const void *)&rxbuf, 16);
 
     inq[Lchan].data[inq[Lchan].wp].dl = (byte)(inq[Lchan].data[inq[Lchan].wp].dl&0x0f);
     
@@ -248,8 +247,8 @@ static void handle_15765(struct can_frame *fr,int chan,int msg_no)
         can15765buf.qdata[can15765buf.wp].data[6] = 0xFF & (currentlid>>16);
         can15765buf.qdata[can15765buf.wp].data[7] = 0xFF & (currentlid>>24);
 
-	   	memcpy(&can15765buf.qdata[can15765buf.wp].data[8],&US_SECOND,4);
-		memcpy(&can15765buf.qdata[can15765buf.wp].data[12],&US_MILISECOND,2);
+	   	memcpy(&can15765buf.qdata[can15765buf.wp].data[8],(void*)&US_SECOND,4);
+		memcpy(&can15765buf.qdata[can15765buf.wp].data[12],(void*)&US_MILISECOND,2);
         
         can15765buf.qdata[can15765buf.wp].data[14] = 0xFF & uiRxDataLength[Lchan];
         can15765buf.qdata[can15765buf.wp].data[15] = uiRxDataLength[Lchan] >> 8;
@@ -265,16 +264,16 @@ static void handle_15765(struct can_frame *fr,int chan,int msg_no)
         	(void)memcpy(&can15765buf.qdata[can15765buf.wp].data[17],(const void *)(&(ucRxBuff[Lchan][currentLidlen+1])), (uint32_t)uiRxDataLength[Lchan]);
         	can15765buf.qdata[can15765buf.wp].len = 17+uiRxDataLength[Lchan];
 		}
-		if(dug_can)
-		{
-			My_Printf(dug_can,"can%drcv15765-%d:",Lchan);
+
+#if dug_can > 0
+			printf_va_args("can%drcv15765-%d:",Lchan);
 			for(i=0;i<can15765buf.qdata[can15765buf.wp].len;i++)
 			{
-				My_Printf(dug_can,"%02x ",can15765buf.qdata[can15765buf.wp].data[i]);
+				printf_va_args("%02x ",can15765buf.qdata[can15765buf.wp].data[i]);
 			}
-			My_Printf(dug_can,"\n");
-		}
-		
+			printf_va_args("\n");
+#endif		
+
         can15765buf.wp++;
         if(can15765buf.wp == CAN_RCV15765_QUEUE_SIZE)  can15765buf.wp = 0;    
         can15765buf.cnt++;
@@ -320,7 +319,7 @@ void task_can0_read()
 			if(frdup.can_id == canid_diag_id[0][i])
 			{
 				//handle 15765
-				if(T15_state==1)
+				if(g_edas_state.state_T15==1)
 				{
 					handle_15765(&frdup,0,i);
 					g_edas_state.state_can0_15765 = 1;
@@ -330,7 +329,7 @@ void task_can0_read()
 			}
 		}	
 		//1939 frame
-		if((T15_state==1)&&(is15765rcv == 0))
+		if((g_edas_state.state_T15==1)&&(is15765rcv == 0))
 		{
 			handle_1939(&frdup,0);
 			g_edas_state.state_can0_1939 = 1;
@@ -369,7 +368,7 @@ void task_can1_read()
 			if(frdup.can_id == canid_diag_id[1][i])
 			{
 				//handle 15765
-				if(T15_state==1)
+				if(g_edas_state.state_T15==1)
 				{
 					handle_15765(&frdup,1,i);
 					g_edas_state.state_can1_15765 = 1;
@@ -381,7 +380,7 @@ void task_can1_read()
 
 	
 		//1939 frame
-		if((T15_state==1)&&(is15765rcv == 0))
+		if((g_edas_state.state_T15==1)&&(is15765rcv == 0))
 		{
 			handle_1939(&frdup,1);
 			g_edas_state.state_can1_1939 = 1;
@@ -574,7 +573,9 @@ uint8_t DirectCanTransmit(uint8_t logchan)
 	outq[logchan].rp++; 				//2011-10-17, after successful tx, inc rp
 	outq[logchan].rp &= CAN_TX_QUEUE_MAX_INDEX;
 	led_Tx_blink(5);
-	My_Printf(dug_can,"DirectLogCan[%d]Trans,chann:%d, id:%08x!\n",logchan,can_logic[logchan].channel,snd_obj.can_id);
+#if dug_can > 0
+	printf_va_args("DirectLogCan[%d]Trans,chann:%d, id:%08x!\n",logchan,can_logic[logchan].channel,snd_obj.can_id);
+#endif
 	/**/
 	return 0; 
 }

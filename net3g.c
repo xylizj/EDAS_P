@@ -9,7 +9,7 @@
 
 #include <signal.h> 
 #include <sys/time.h> 
-#include "edas_gpio.h"
+#include "gpio.h"
 #include "common.h"
 
 #include <sys/ioctl.h>
@@ -21,7 +21,7 @@ File_Trans_State fileTransState;
 
 
 extern struct sockaddr_in g_addr;
-extern pthread_mutex_t g_file_mutex;
+
 
 
 int GetTtyACM0Stat( )
@@ -88,7 +88,7 @@ int GetNetStat( )
 
 
 
-int curnetstat= -1;
+//char curnetstat= -1;
 
 int detect3g = 0;
 int is3gvalid = 0;
@@ -104,7 +104,7 @@ void task_heartbeat()
 {
 	while(1)
 	{
-		while(g_3gState != 1)
+		while(g_edas_state.state_3g != 1)
 		{
 			sleep(1);
 		}
@@ -158,11 +158,10 @@ void task_ChkSndFile()
 			noFileTransCnt = 0;
 		}
 		
-		
-		My_Printf(dug_3g,"fileTransState:%d,curTransFile :%d,filescnt:%d,state:%d\n",fileTransState,curTransFile,filescnt,state);
-
-
-		if(T15_state == 1)
+#if dug_sys > 0 
+		printf_va_args("fileTransState:%d,curTransFile :%d,filescnt:%d,state:%d\n",fileTransState,curTransFile,filescnt,state);
+#endif 		
+		if(g_edas_state.state_T15 == 1)
 		{
 			powerOffCnt = 0;
 		}
@@ -174,7 +173,9 @@ void task_ChkSndFile()
 				sleep(10);
 				if(powerOffCnt > 2)
 				{
-					My_Printf(dug_sys,"noFileTrans_reboot!\n");
+#if dug_sys > 0
+ 					printf_va_args("noFileTrans_reboot!\n");
+#endif
 					sleep(1);
 					system("reboot");
 				}
@@ -189,8 +190,9 @@ void task_ChkSndFile()
 				continue;
 			}
 
-			
-			My_Printf(dug_3g,"fileTransState :%d\n",fileTransState);
+#if dug_sys > 0			
+			printf_va_args("fileTransState :%d\n",fileTransState);
+#endif
 			if((curTransFile >= 0)&&(curTransFile <filescnt))
 			{				
 				memset(curTransFileName,0,255);
@@ -200,21 +202,23 @@ void task_ChkSndFile()
 				memset(cur3gfilename,0,100);
 				memcpy(cur3gfilename,filesRecord[i].filename,strlen(filesRecord[i].filename));
 				cur3gfilename_len = strlen(filesRecord[i].filename);	
-				
-				My_Printf(dug_3g,"curMsgstate.state :%d\n",curMsgstate.state);
-				
+#if dug_sys > 0				
+				printf_va_args("curMsgstate.state :%d\n",curMsgstate.state);
+#endif				
 				if(curMsgstate.state == MsgState_rcv)
 				{
 					fp_curTrans = fopen(curTransFileName , "rb");
 					if(fp_curTrans == NULL)
 					{
-						My_Printf(dug_3g,"fopen failed\n");
+#if dug_sys > 0
+						printf_va_args("fopen failed\n");
+#endif
 					}
 					else
 					{
 						g_fp_curTrans_state = 1;
 					}
-					My_Printf(dug_3g,"1223_filename is :%s\n",curTransFileName);
+					//printf_va_args_en(dug_3g,"1223_filename is :%s\n",curTransFileName);
 					Request_upfile(fp_curTrans,sockfd,&g_addr,sizeof(struct sockaddr_in));
 					fileTransState = REQUEST_UPFILE;
 				}
@@ -244,12 +248,12 @@ void reinit_3g_net()
 	}
 	else
 	{		
-		g_pppd_pid = pid;		
+		g_edas_state.pppd_pid = pid;		
 		sleep(25);
 		}
 	}
 
-void init_3g_net()
+void init_3g_net(void)
 {
 	//int port = 5888;
 	int port;
@@ -268,26 +272,21 @@ void init_3g_net()
 	if(pid==0){		
 		//execlp("pppd","pppd","call","wcdma",NULL);
 		system("pppd call wcdma");
-		perror("execl error");
+		//perror("execl error");
 	}
 	else
 	{	
-		g_pppd_pid = pid;		
+		g_edas_state.pppd_pid = pid;		
 		sleep(25);
 		sockfd=socket(AF_INET,SOCK_DGRAM,0);
 		
 		bzero(&g_addr,sizeof(struct sockaddr_in));
 		g_addr.sin_family=AF_INET;
 		g_addr.sin_port=htons(port);
-		//if(inet_aton("121.40.136.104",&g_addr.sin_addr)<0){
-		if(inet_aton(g_ServerIP,&g_addr.sin_addr)<0){
-			
-		
-			My_Printf(dug_3g,"inet_aton error\n");
+		if(inet_aton(g_ServerIP,&g_addr.sin_addr)<0){		
+			//printf_va_args_en(dug_3g,"inet_aton error\n");
 		}
 	}
-	
-	
 }
 
 

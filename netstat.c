@@ -160,7 +160,7 @@ int main()
 			if(edas_pid)
 			if(sigqueue(pid,signum,mysigval)==-1)
 			{
-				MyPrintf("send error\n");
+				printf_va_args("send error\n");
 			}
 			else
 			{

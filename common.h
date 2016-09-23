@@ -1,14 +1,16 @@
 #ifndef __COMMON_H_
 #define __COMMON_H_
 
-#include "LinkQueue.h"
+
+#include <stdbool.h>
 #include <stdarg.h>
+#include "queue.h"
 
 #define FileDeviceName "/devicename.txt"
 
 
-#define CFG_3G_ENABLE 1
-#define CFG_GPS_ENABLE 0
+#define CFG_3G_ENABLE 	1
+#define CFG_GPS_ENABLE	1
 
 
 
@@ -25,7 +27,7 @@
 #define DOWN_CONFIG_SIGNAL  0x06
 #define UP_DAQ_SIGNAL       0xFD
 #define USB_QUEUE_SIZE 2500
-#define SD_QUEUE_SIZE 2500
+
 
 #define DUG_PRINTF_EN 1
 #define DUG_1939 	1
@@ -107,8 +109,11 @@ typedef enum
 /*tEDAS_P_STATE  0:stop work, 1:working nomally, 2:not configuration*/
 typedef struct
 {
-	char state_cfg;
+	//char state_cfg;
 	char state_T15;
+	char state_3g;
+	volatile int pppd_pid;
+	char net_stat;
 	char state_gps;
 	char state_k;
 	char state_can0_1939;
@@ -142,15 +147,7 @@ typedef struct
 	int len;
 }tMsgState;
 
-typedef struct
-{
-  uint8_t		queuefull;				/*queue full,if queue 0 full,bit0=1;if queue 1 full,bit1=1;*/
-  uint16_t		max;					/* max data in queue */
-  uint16_t		cnt; 				  /*cnt[0] for queue0 data cnt; cnt[1] for queue1 data cnt */
-  uint8_t		blocknum;
-  uint32_t		chksum;
-  uint8_t		data[SD_QUEUE_SIZE];   /* frame data */
-}tSD_buffer;
+
 
 
 extern volatile double latitude;
@@ -162,12 +159,10 @@ extern volatile double height;
 extern volatile unsigned int US_SECOND;
 extern volatile unsigned int US_MILISECOND;
 
-//extern char EDAS_FILE[100];
 
 
 extern int fd_k;
 extern int sockfd;
-extern unsigned char record_filename[255];
 
 extern tFilesRecord  filesRecord[100];
 extern int filescnt;
@@ -178,7 +173,7 @@ extern int fileoldscnt;
 extern char cur3gfilename[100];
 extern int cur3gfilename_len;
 extern char CAR_ID[40];
-extern int T15_state;
+extern char T15_state;
 
 extern int detect3g;
 extern int is3gvalid;
@@ -199,59 +194,50 @@ extern unsigned int g_Rcv3gCnt;
 
 extern unsigned int g_LastRcvCnt;
 extern unsigned int g_3gState;
-extern volatile int g_pppd_pid;
-extern int curnetstat;
+//extern volatile int g_pppd_pid;
+extern char curnetstat;
 extern char g_ServerIP[20];
 extern char g_ServerPort[10];
-extern volatile int g_isDownloadCfg;
-extern FILE *g_fp_cfg;
 
 
-extern volatile int g_isDownloadCfg;
-extern volatile int g_FileSizeofCfg;
-extern char g_cfgFile[512*10];
-extern int g_cfgFilecnt[10];
-extern volatile int g_cfgFileblock;
-extern FILE *g_fp_cfg; 
-extern volatile int g_fp_cfg_state;
+extern bool g_isDownloadCfg;
 extern volatile tEDAS_P_STATE g_edas_state;
 extern volatile unsigned int g_read_cur_offset;
 extern char g_rtc_state;
 
+extern pthread_mutex_t g_file_mutex;
+extern pthread_mutex_t g_rtc_mutex;
 
-void sendUdpMsg(char *buf,int len,unsigned char rxMsgId);
+extern void sendUdpMsg(char *buf,int len,unsigned char rxMsgId);
 
-void upDateTime();
+extern unsigned int getSystemTime(void);
+extern void chksum(char *buf,int len);
+extern void upDateTime(void);
 
-unsigned int getSystemTime();
-void chksum(char *buf,int len);
-void upDateTime();
+extern void creat_FileName(unsigned char *ptPath,unsigned char *name);
 
-void creat_FileName(unsigned char *ptPath,unsigned char *name);
+extern void writeFilesRecords(void);
+extern char *itoa(int num, char *str, int radix);
+extern void reinit_3g_net(void);
+extern void makeKillCommand(char *command,int pid);
+extern void task_can(void);
+extern void task_k(void);
+extern void task_ChkSndFile(void);
+extern void task_sd(void);
+extern void task_gps(void);
+extern void task_udprcv(void);
+extern void task_handle_msg(void);
+extern void task_check_msgrx(void);
+extern void task_heartbeat(void);
+extern void getFilesName(void);
+extern void writeFilesRecords(void);
+extern void printf_va_args(const char* fmt, ...);
 
-void writeFilesRecords();
-char *itoa(int num, char *str, int radix);
-void reinit_3g_net();
-void makeKillCommand(char *command,int pid);
-void task_can();
-void task_k();
-void task_ChkSndFile();
-void task_sd();
-void task_gps();
-int  ReadCfg();
-void task_udprcv();
-void task_handle_msg();
-void task_check_msgrx();
-void task_heartbeat();
-void getFilesName();
-void writeFilesRecords();
-void MyPrintf(const char* fmt, ...);
-void My_Printf(char isEn,const char* fmt, ...);
-
-int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free);
-int upDateEdas();
-void utc2cst(unsigned char *utc,unsigned char *cst);
-int set_rtctime(unsigned char *cst);
+extern int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free);
+extern void init_edas_state(void);
+extern void init_user_mutex(void);
+extern void utc2cst(unsigned char *utc,unsigned char *cst);
+extern int set_rtctime(unsigned char *cst);
 
 #endif
 

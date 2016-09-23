@@ -2,15 +2,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "can.h"
-#include "readcfg.h"
-
-
 #include <net/if.h>
 #include <linux/socket.h>
 #include <linux/can.h>
 #include <linux/can/error.h>
 #include <linux/can/raw.h>
+
+
+#include "can.h"
+#include "gpio.h"
+#include "readcfg.h"
+
+
 
 char cData[10];
 char cTime[8];
@@ -64,27 +67,59 @@ uint8_t bIsGpsValid;
 tCAN1939 CAN1939[50];
 
 
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_CFG.txt"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawDataStream.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/test_1939_eec1.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawData15765.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawDataStream_EDC7_K.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_CFG_20141217.ers"
-#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_P_CFG.ers"
-
- typedef struct
+void read_edas_cfg(void)
 {
-	char Fmt;
-	char BlockNum;
-	short DataLen;
-}tHEADER;
+	FILE *fp_cfg;
+	char buff[100];
+	int state = 0;
 
- typedef struct
-{
-	char Type;
-	char Status;
-	short BlockSize;
-}tTYPE_HEADER;
+	fp_cfg = fopen("/media/sd-mmcblk0p1/EDASCFG","r");
+	if(fp_cfg != NULL)
+	{
+		state = 0;
+		
+		while(fgets(buff,100,fp_cfg)!=NULL)
+		{
+			switch(state)
+			{
+				case 0:
+					if((buff[1]=='I')&&(buff[2]=='P'))   //IP_SET
+						state = 1;
+					else if((buff[1]=='P')&&(buff[2]=='O')) //PORT_SET
+						state = 2;
+					else if((buff[1]=='C')&&(buff[2]=='A')) //CAR_ID
+						state = 3;
+					else if((buff[1]=='D')&&(buff[2]=='E')) //DEVICEID
+						state = 4;
+					else
+						state = 0;
+					break;
+				case 1:
+					memcpy(g_ServerIP,buff,strlen(buff));
+					memset(buff,0,100);
+					state = 0;
+					break;
+				case 2:
+					memcpy(g_ServerPort,buff,strlen(buff));
+					memset(buff,0,100);
+					state = 0;
+					break;
+				case 3:
+					memcpy(CAR_ID,buff,strlen(buff));
+					memset(buff,0,100);
+					printf("\nCARD_ID:%s\n",CAR_ID);
+					state = 0;
+					break;
+				case 4:
+					DeviceID = atoi(buff);
+					memset(buff,0,100);
+					state = 0;
+					break;					
+			}
+		}
+		fclose(fp_cfg);
+	}
+}
 
 char CanIndex2Arraynum(char index)
 {
@@ -94,7 +129,7 @@ char CanIndex2Arraynum(char index)
     return (lo+hi);
 }
 
-int ReadCfg()
+static int ReadCfg(void)
 {
 	FILE *fp;
 	unsigned int iCount;
@@ -122,7 +157,7 @@ int ReadCfg()
 	
 	fseek(fp,0,SEEK_END);
 	iCount = ftell(fp);
-	My_Printf(dug_readcfg,"%d bytes total!\n",iCount);
+	//printf_va_args_en(dug_readcfg,"%d bytes total!\n",iCount);
 	rewind(fp);
 	state = STATUS_IDLE;
 	
@@ -205,7 +240,7 @@ int ReadCfg()
 				switch(typeheader.Type)
 				{
 					case REQ_FREE_SRC://do nothing
-						My_Printf(dug_readcfg,"REQ_FREE_SRC\n");
+						//printf_va_args_en(dug_readcfg,"REQ_FREE_SRC\n");
 						break;
 					case REQ_CONFIG_COM://do nothing
 						canfcnt[0] = 0;
@@ -223,7 +258,9 @@ int ReadCfg()
 						can15765buf.cnt = 0;
 						can15765buf.rp = 0;
 						can15765buf.wp = 0;
-						My_Printf(dug_readcfg,"REQ_CONFIG_COM\n");
+#if dug_readcfg	> 0						
+						printf_va_args("REQ_CONFIG_COM\n");
+#endif						
 						break;
 					case DOWN_CONFIG_CAN:
 						if(data[0] == 1)  //is valid
@@ -237,11 +274,12 @@ int ReadCfg()
 							}							
 							
 							memcpy(&can_channel[channel_can_x],(const void *)&data[0],4);							
-							My_Printf(dug_readcfg,"can_channel[]: %d \n",channel_can_x);
-							My_Printf(dug_readcfg,"bIsValid:%d\n",can_channel[channel_can_x].bIsValid);
-							My_Printf(dug_readcfg,"nLogicDiagChanNum:%d\n",can_channel[channel_can_x].nLogicDiagChanNum);
-							My_Printf(dug_readcfg,"wBaudrate:%d\n",can_channel[channel_can_x].wBaudrate);
-							
+#if dug_readcfg	> 0
+							printf_va_args("can_channel[]: %d \n",channel_can_x);
+							printf_va_args("bIsValid:%d\n",can_channel[channel_can_x].bIsValid);
+							printf_va_args("nLogicDiagChanNum:%d\n",can_channel[channel_can_x].nLogicDiagChanNum);
+							printf_va_args("wBaudrate:%d\n",can_channel[channel_can_x].wBaudrate);
+#endif							
 							j=(typeheader.BlockSize-4)/12;
 				
 							for(i=0;i<j;i++)
@@ -288,34 +326,33 @@ int ReadCfg()
 								canid_diag_id[channel_can_x][canid_diag_cnt[channel_can_x]]=canfilter[channel_can_x][canfcnt[channel_can_x]].can_id;
 								canid_diag_cnt[channel_can_x]++;								
 								canfcnt[channel_can_x]++;		
-
-								My_Printf(dug_readcfg,"can_logic[%d]: ucLogicIndex:%d\n",arraynum,ucLogicIndex);
-								My_Printf(dug_readcfg,"dwTesterID:0x%08x\n",can_logic[arraynum].dwTesterID);
-								My_Printf(dug_readcfg,"dwEcuID:0x%08x\n",can_logic[arraynum].dwEcuID);
-								My_Printf(dug_readcfg,"ucDiagType:0x%08x\n",can_logic[arraynum].ucDiagType);
-								My_Printf(dug_readcfg,"ucLogicChanIndex:0x%08x\n",can_logic[arraynum].ucLogicChanIndex);
-								My_Printf(dug_readcfg,"can_logic_num:%d\n",can_logic_num);
-								My_Printf(dug_readcfg,"I2L: %d %d %d %d %d %d %d %d\n",I2L[0],I2L[1],I2L[2],I2L[3],I2L[4],I2L[5],I2L[6],I2L[7]);
-							}
-							
-							
-						}
-						
+#if dug_readcfg	> 0	
+								printf_va_args("can_logic[%d]: ucLogicIndex:%d\n",arraynum,ucLogicIndex);
+								printf_va_args("dwTesterID:0x%08x\n",can_logic[arraynum].dwTesterID);
+								printf_va_args("dwEcuID:0x%08x\n",can_logic[arraynum].dwEcuID);
+								printf_va_args("ucDiagType:0x%08x\n",can_logic[arraynum].ucDiagType);
+								printf_va_args("ucLogicChanIndex:0x%08x\n",can_logic[arraynum].ucLogicChanIndex);
+								printf_va_args("can_logic_num:%d\n",can_logic_num);
+								printf_va_args("I2L: %d %d %d %d %d %d %d %d\n",I2L[0],I2L[1],I2L[2],I2L[3],I2L[4],I2L[5],I2L[6],I2L[7]);
+#endif
+							}														
+						}						
 						break;
+						
 					case DOWN_CONFIG_KLINE: 
 						kline_channel = (typeheader.Status>>4) & 0x07;
 						memcpy(&kline_config[kline_channel],(const void *)&data[0],24);
-						My_Printf(dug_readcfg,"kline_config[%d]:\n",kline_channel);
-						My_Printf(dug_readcfg,"bIsValid:%d\n",kline_config[kline_channel].bIsValid);
-						My_Printf(dug_readcfg,"ucDiagType:%d\n",kline_config[kline_channel].ucDiagType);
-						My_Printf(dug_readcfg,"wBaudrate:%d\n",kline_config[kline_channel].wBaudrate);
-						My_Printf(dug_readcfg,"Tester_InterByteTime_ms:%d\n",kline_config[kline_channel].Tester_InterByteTime_ms);
-						My_Printf(dug_readcfg,"ECU_MaxInterByteTime_ms:%d\n",kline_config[kline_channel].ECU_MaxInterByteTime_ms);
-						My_Printf(dug_readcfg,"ECU_MaxResponseTime_ms:%d\n",kline_config[kline_channel].ECU_MaxResponseTime_ms);
-						My_Printf(dug_readcfg,"Tester_MaxNewRequestTime_ms:%d\n",kline_config[kline_channel].Tester_MaxNewRequestTime_ms);
-
-						My_Printf(dug_readcfg,"nInitFrmLen:%d\n",kline_config[kline_channel].nInitFrmLen);
-						My_Printf(dug_readcfg,"ucInitFrmData[10]:%d %d %d %d %d %d %d %d %d %d \n",
+#if dug_readcfg	> 0					
+						printf_va_args("kline_config[%d]:\n",kline_channel);
+						printf_va_args("bIsValid:%d\n",kline_config[kline_channel].bIsValid);
+						printf_va_args("ucDiagType:%d\n",kline_config[kline_channel].ucDiagType);
+						printf_va_args("wBaudrate:%d\n",kline_config[kline_channel].wBaudrate);
+						printf_va_args("Tester_InterByteTime_ms:%d\n",kline_config[kline_channel].Tester_InterByteTime_ms);
+						printf_va_args("ECU_MaxInterByteTime_ms:%d\n",kline_config[kline_channel].ECU_MaxInterByteTime_ms);
+						printf_va_args("ECU_MaxResponseTime_ms:%d\n",kline_config[kline_channel].ECU_MaxResponseTime_ms);
+						printf_va_args("Tester_MaxNewRequestTime_ms:%d\n",kline_config[kline_channel].Tester_MaxNewRequestTime_ms);
+						printf_va_args("nInitFrmLen:%d\n",kline_config[kline_channel].nInitFrmLen);
+						printf_va_args("ucInitFrmData[10]:%d %d %d %d %d %d %d %d %d %d \n",
 						kline_config[kline_channel].ucInitFrmData[0],
 						kline_config[kline_channel].ucInitFrmData[1],
 						kline_config[kline_channel].ucInitFrmData[2],
@@ -326,6 +363,7 @@ int ReadCfg()
 						kline_config[kline_channel].ucInitFrmData[7],
 						kline_config[kline_channel].ucInitFrmData[8],
 						kline_config[kline_channel].ucInitFrmData[9]);
+#endif						
 						break;
 					case REQ_CONFIG_SIGNAL: 
 						break;
@@ -338,15 +376,15 @@ int ReadCfg()
 								arraynum = CanIndex2Arraynum(ucLogicIndex);
 								
 								memcpy(&can_signal[signal_can_num],(const void *)&data[0],12);  //9-->12
-								My_Printf(dug_readcfg,"can_signal[%d]:\n",signal_can_num);
-								
-								My_Printf(dug_readcfg,"dwLocalID:0x%08x\n",can_signal[signal_can_num].dwLocalID);
-								My_Printf(dug_readcfg,"ucRdDatSerID:0x%02x\n",can_signal[signal_can_num].ucRdDatSerID);
-
-								My_Printf(dug_readcfg,"ucLidLength:%d\n",can_signal[signal_can_num].ucLidLength);
-								My_Printf(dug_readcfg,"ucMemSize:%d\n",can_signal[signal_can_num].ucMemSize);
-								My_Printf(dug_readcfg,"ucLogicChanIndex:%d\n",can_signal[signal_can_num].ucLogicChanIndex);
-								My_Printf(dug_readcfg,"wSampleCyc:%d\n",can_signal[signal_can_num].wSampleCyc);
+#if dug_readcfg	> 0										
+								printf_va_args("can_signal[%d]:\n",signal_can_num);								
+								printf_va_args("dwLocalID:0x%08x\n",can_signal[signal_can_num].dwLocalID);				
+								printf_va_args("ucRdDatSerID:0x%02x\n",can_signal[signal_can_num].ucRdDatSerID);
+								printf_va_args("ucLidLength:%d\n",can_signal[signal_can_num].ucLidLength);
+								printf_va_args("ucMemSize:%d\n",can_signal[signal_can_num].ucMemSize);
+								printf_va_args("ucLogicChanIndex:%d\n",can_signal[signal_can_num].ucLogicChanIndex);
+								printf_va_args("wSampleCyc:%d\n",can_signal[signal_can_num].wSampleCyc);
+#endif
 								can_signal[signal_can_num].dwNextCommTime = 0;
 								can_logic[arraynum].pt_signal[can_logic[arraynum].ucSignalNum] = &can_signal[signal_can_num];
 								signal_can_num++;
@@ -365,14 +403,14 @@ int ReadCfg()
 							case SIGNAL_DIAG_KLINE:
 								ucLogicIndex = data[7];
 								memcpy(&kline_siganl[siganl_kline_num],(const void *)&data[0],12); 
-								My_Printf(dug_readcfg,"kline_siganl[%d]:\n",siganl_kline_num);
+								//printf_va_args_en(dug_readcfg,"kline_siganl[%d]:\n",siganl_kline_num);
 								
-								My_Printf(dug_readcfg,"dwLocalID:0x%08x\n",kline_siganl[siganl_kline_num].dwLocalID);
-								My_Printf(dug_readcfg,"ucRdDatSerID:0x%02x\n",kline_siganl[siganl_kline_num].ucRdDatSerID);
-								My_Printf(dug_readcfg,"ucLidLength:%d\n",kline_siganl[siganl_kline_num].ucLidLength);
-								My_Printf(dug_readcfg,"ucMemSize:%d\n",kline_siganl[siganl_kline_num].ucMemSize);
-								My_Printf(dug_readcfg,"ucLogicChanIndex:0x%02x\n",kline_siganl[siganl_kline_num].ucLogicChanIndex);
-								My_Printf(dug_readcfg,"wSampleCyc:%d\n",kline_siganl[siganl_kline_num].wSampleCyc);
+								//printf_va_args_en(dug_readcfg,"dwLocalID:0x%08x\n",kline_siganl[siganl_kline_num].dwLocalID);
+								//printf_va_args_en(dug_readcfg,"ucRdDatSerID:0x%02x\n",kline_siganl[siganl_kline_num].ucRdDatSerID);
+								//printf_va_args_en(dug_readcfg,"ucLidLength:%d\n",kline_siganl[siganl_kline_num].ucLidLength);
+								//printf_va_args_en(dug_readcfg,"ucMemSize:%d\n",kline_siganl[siganl_kline_num].ucMemSize);
+								//printf_va_args_en(dug_readcfg,"ucLogicChanIndex:0x%02x\n",kline_siganl[siganl_kline_num].ucLogicChanIndex);
+								//printf_va_args_en(dug_readcfg,"wSampleCyc:%d\n",kline_siganl[siganl_kline_num].wSampleCyc);
                             	siganl_kline_num++;
 								g_edas_state.state_k = 0;						
 								break;
@@ -385,7 +423,7 @@ int ReadCfg()
 								
 								cchan = CAN1939[CAN_1939_num].chan;	
 
-								My_Printf(dug_readcfg,"CAN1939[%d] id=0x%08x,%d\n",CAN_1939_num,CAN1939[CAN_1939_num].ID,CAN1939[CAN_1939_num].chan);
+								//printf_va_args_en(dug_readcfg,"CAN1939[%d] id=0x%08x,%d\n",CAN_1939_num,CAN1939[CAN_1939_num].ID,CAN1939[CAN_1939_num].chan);
 								
 								
 								if(CAN1939[CAN_1939_num].ID && 0x40000000)//extend id
@@ -432,7 +470,7 @@ int ReadCfg()
 	return cnt_cfg_signal;
 }
 
-void updateAuthCode()
+void updateAuthCode(void)
 {
 	int i;
 	unsigned int sum;
@@ -497,5 +535,21 @@ void updateAuthCode()
 
 }
 
+void read_user_cfgset(void)
+{
+	if(ReadCfg()>0)
+	{
+#if dug_readcfg > 0
+		printf_va_args("readcfg done!\n");
+#endif
+	}
+	else
+	{
+		edas_led_erron();
+#if dug_readcfg > 0
+		printf_va_args("readcfg failed!\n");
+#endif
+	}
+}
 
 

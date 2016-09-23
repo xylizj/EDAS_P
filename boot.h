@@ -4,7 +4,7 @@
 
 
 
-extern int UpdateEdas(void);
+extern int update_boot(void);
 
 
 #endif

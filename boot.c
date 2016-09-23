@@ -12,7 +12,7 @@
 #include "common.h"
 #include "boot.h"
 
-int UpdateEdas(void)
+int update_boot(void)
 {
 	FILE *fp;
 	char buf[200] = {0};
@@ -28,7 +28,9 @@ int UpdateEdas(void)
 			system("cp /media/sd-mmcblk0p1/boot/edas_p /root/");
 			sleep(1);
 			remove("/media/sd-mmcblk0p1/boot/edas_p");
-			My_Printf(dug_sys,"upDateEdas_reboot!\n");
+			#if dug_sys > 0
+			printf_va_args("upDateEdas_reboot!\n");
+			#endif
 			sleep(1);			
 			system("reboot");
 		}

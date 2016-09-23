@@ -265,11 +265,12 @@ void task_gps()
 
 		if(0x0F == gpsflg)
 		{
-			My_Printf(dug_gps,"s_latitude  = %s\n",gps_latitude);
-			My_Printf(dug_gps,"s_longitude = %s\n",gps_longitude);
-			My_Printf(dug_gps,"s_speed	  = %s\n",gps_speed);
-			My_Printf(dug_gps,"s_height	  = %s\n",gps_height);
-
+#if dug_gps >0
+			printf_va_args("s_latitude  = %s\n",gps_latitude);
+			printf_va_args("s_longitude = %s\n",gps_longitude);
+			printf_va_args("s_speed	  = %s\n",gps_speed);
+			printf_va_args("s_height	  = %s\n",gps_height);
+#endif
 			memcpy(gps_latitude_du,gps_latitude,2);
 			memcpy(gps_latitude_fen,&gps_latitude[2],7);
 

@@ -23,16 +23,27 @@
 #include "can.h"
 #include "readcfg.h"
 #include "kline.h"
-#include "edas_gpio.h"
+#include "gpio.h"
 #include "net3g.h"
-#include "edas_rtc.h"
-#include "uploadingfile.h"
+#include "rtc.h"
+#include "upload_file.h"
 #include <string.h>
 
 //#include <sys/vfs.h> /* 或者 <sys/statfs.h> */
 #include <sys/statfs.h>
 #include <stdarg.h>
 
+unsigned int DeviceID= 20150801; // for DBTS
+//unsigned int DeviceID= 20151112;  //for CVS
+
+pthread_mutex_t g_file_mutex;
+pthread_mutex_t g_rtc_mutex;
+
+LinkQueue msg_queue;
+unsigned int g_Rcv3gCnt;
+unsigned int g_LastRcvCnt;
+
+bool g_isDownloadCfg = FALSE;
 
 
 int fd_k = -1;
@@ -51,8 +62,11 @@ volatile double height;
 int latitude_du;
 int longitude_du;
 
+//char T15_state;
 volatile tEDAS_P_STATE g_edas_state;
-
+char CAR_ID[40] = "E0801"; //for DBTS
+char g_ServerIP[20];
+char g_ServerPort[10];
 //debug para:
 /*char dug_readcfg = 1;
 char dug_gps = 1;
@@ -279,8 +293,11 @@ int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free)
 
 
 
-void init_EDAS_State()
+void init_edas_state(void)
 {
+	g_edas_state.state_T15 = 1;
+	g_edas_state.state_3g = 0;
+	g_edas_state.net_stat = -1;
 	g_edas_state.state_gps        = 2;
 	g_edas_state.state_k          = 2;
 	g_edas_state.state_can0_1939  = 2;
@@ -289,7 +306,25 @@ void init_EDAS_State()
 	g_edas_state.state_can1_15765 = 2;
 }
 
-void MyPrintf(const char* fmt, ...)
+void init_user_mutex(void)
+{
+	int ret;
+
+	ret = pthread_mutex_init(&g_file_mutex, NULL);
+    if(ret != 0)  
+    {  
+        perror("pthread_mutex_init failed\n");  
+        exit(EXIT_FAILURE);  
+    }
+	ret = pthread_mutex_init(&g_rtc_mutex, NULL);  	
+    if(ret != 0)  
+    {  
+        perror("pthread_mutex_init failed\n");  
+        exit(EXIT_FAILURE);  
+    }
+}
+
+void printf_va_args(const char* fmt, ...)
 {
 	#if DUG_PRINTF_EN
     va_list args;         //定义一个va_list类型的变量，用来储存单个参数
@@ -301,18 +336,6 @@ void MyPrintf(const char* fmt, ...)
     #endif
 }
 
-void My_Printf(char isEn,const char* fmt, ...)
-{
-#if DUG_PRINTF_EN
-	if(isEn)
-	{
-	    va_list args;         //定义一个va_list类型的变量，用来储存单个参数
-	    va_start(args, fmt);  //使args指向可变参数的第一个参数
-	    vprintf(fmt,args);   //必须用vprintf
-	    va_end(args);         //结束可变参数的获取
-	}
-#endif
-}
 
 
 

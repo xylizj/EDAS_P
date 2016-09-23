@@ -1,0 +1,724 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AF_CAN	can.h	13;"	d
+B10400	kline.c	54;"	d	file:
+B9600	gps.c	38;"	d	file:
+BOOL	common.h	/^typedef unsigned int    	BOOL;$/;"	t
+BYTE	common.h	/^typedef unsigned char 		BYTE;$/;"	t
+BlockNum	readcfg.h	/^	char BlockNum;$/;"	m	struct:__anon22
+BlockNum	readcfg.h	/^  uint8_t	  BlockNum ;$/;"	m	struct:__anon15
+BlockSize	readcfg.h	/^	short BlockSize;$/;"	m	struct:__anon23
+CAN1939	readcfg.c	/^tCAN1939 CAN1939[50];$/;"	v
+CANBUFSIZE	can.h	113;"	d
+CAN_1939_num	readcfg.c	/^uint8_t  CAN_1939_num = 0;$/;"	v
+CAN_CHANNEL_MAX	can.h	21;"	d
+CAN_ERR_RX_TIMEOUT	can.h	46;"	d
+CAN_ERR_TX_BUSY	can.h	48;"	d
+CAN_ERR_TX_OK	can.h	45;"	d
+CAN_LOGIC_MAX	can.h	22;"	d
+CAN_RCV15765_QUEUE_SIZE	can.h	123;"	d
+CAN_RCV1939_QUEUE_SIZE	can.h	122;"	d
+CAN_RX_QUEUE_SIZE	can.h	92;"	d
+CAN_SIGNAL_MAX	can.h	23;"	d
+CAN_TX_QUEUE_MAX_INDEX	can.h	35;"	d
+CAN_TX_QUEUE_SIZE	can.h	102;"	d
+CAR_ID	edas_p.c	/^char CAR_ID[40] = "E0801"; \/\/for DBTS$/;"	v
+CC	Makefile	/^CC = $(CROSS)gcc$/;"	m
+CFG_3G_ENABLE	common.h	10;"	d
+CFG_GPS_ENABLE	common.h	11;"	d
+CHAN_LOGIC_MAX	can.h	20;"	d
+CHECK_FILE	common.h	/^  CHECK_FILE,$/;"	e	enum:__anon24
+CHKSUM_RECEIVING	readcfg.c	/^	CHKSUM_RECEIVING,$/;"	e	enum:__anon1	file:
+CROSS	Makefile	/^CROSS = arm-fsl-linux-gnueabi-$/;"	m
+CanFilterInit	can.c	/^int CanFilterInit(int chan)$/;"	f
+CanIndex2Arraynum	readcfg.c	/^char CanIndex2Arraynum(char index)$/;"	f
+Can_ErrIndication	can.c	/^void Can_ErrIndication(uint8_t logchan,uint8_t errCode)$/;"	f
+Can_RxIndication	can.c	/^void Can_RxIndication(uint8_t channel)$/;"	f
+Can_SendIso15765Buff	can.c	/^uint8_t Can_SendIso15765Buff(uint8_t *pData, uint16_t length,uint8_t logchan)$/;"	f
+Can_TxConfirmation	can.c	/^void Can_TxConfirmation(uint8_t logchan,uint8_t result)$/;"	f
+CarNum	uploadingfile.c	/^char CarNum[] = "ES0123456789";$/;"	v
+CheckFile	uploadingfile.c	/^int CheckFile(int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+ClearQueue	LinkQueue.c	/^Status ClearQueue(LinkQueue *Q)$/;"	f
+DATA_LEN	gps.c	36;"	d	file:
+DATA_LEN	kline.c	19;"	d	file:
+DATA_RECEIVING	readcfg.c	/^	DATA_RECEIVING,$/;"	e	enum:__anon1	file:
+DOWN_CONFIG_CAN	readcfg.h	19;"	d
+DOWN_CONFIG_KLINE	readcfg.h	20;"	d
+DOWN_CONFIG_SIGNAL	common.h	25;"	d
+DOWN_CONFIG_SIGNAL	readcfg.h	21;"	d
+DUG_1939	common.h	31;"	d
+DUG_KLINE	common.h	32;"	d
+DUG_PRINTF_EN	common.h	30;"	d
+DataLen	readcfg.h	/^	short DataLen;$/;"	m	struct:__anon22
+DataLength	readcfg.h	/^  uint16_t   DataLength;$/;"	m	struct:__anon15
+DeQueue	LinkQueue.c	/^Status DeQueue(LinkQueue *Q, QElemType *e)$/;"	f
+DestroyQueue	LinkQueue.c	/^Status DestroyQueue(LinkQueue *Q)$/;"	f
+DeviceID	edas_p.c	/^unsigned int DeviceID= 20150801; \/\/ for DBTS$/;"	v
+DirectCanTransmit	can.c	/^uint8_t DirectCanTransmit(uint8_t logchan)$/;"	f
+ECU_MaxInterByteTime_ms	readcfg.h	/^    uint8_t    ECU_MaxInterByteTime_ms;$/;"	m	struct:__anon20
+ECU_MaxResponseTime_ms	readcfg.h	/^    uint16_t   ECU_MaxResponseTime_ms;$/;"	m	struct:__anon20
+EDASCFGFILE	readcfg.h	122;"	d
+EDASCFG_TMP	common.h	53;"	d
+EDAS_3G_OFF	edas_gpio.h	5;"	d
+EDAS_3G_RESTARTHI	edas_gpio.h	8;"	d
+EDAS_3G_RESTARTLO	edas_gpio.h	9;"	d
+EDAS_3G_START	edas_gpio.h	6;"	d
+EDAS_3G_STOP	edas_gpio.h	7;"	d
+EDAS_3G_WORK	edas_gpio.h	4;"	d
+EDAS_FILE	common.h	15;"	d
+EDAS_LED_ERROFF	edas_gpio.h	21;"	d
+EDAS_LED_ERRON	edas_gpio.h	20;"	d
+EDAS_LED_KOFF	edas_gpio.h	24;"	d
+EDAS_LED_KON	edas_gpio.h	23;"	d
+EDAS_LED_RXOFF	edas_gpio.h	15;"	d
+EDAS_LED_RXON	edas_gpio.h	14;"	d
+EDAS_LED_TXOFF	edas_gpio.h	18;"	d
+EDAS_LED_TXON	edas_gpio.h	17;"	d
+EDAS_LED_USBOFF	edas_gpio.h	12;"	d
+EDAS_LED_USBON	edas_gpio.h	11;"	d
+EDAS_POWEROFF	edas_gpio.h	3;"	d
+EDAS_POWERON	edas_gpio.h	2;"	d
+EDAS_SIGNUM	netstat.c	13;"	d	file:
+EDAS_WD_OFF	edas_gpio.h	27;"	d
+EDAS_WD_ON	edas_gpio.h	26;"	d
+ERROR	LinkQueue.h	10;"	d
+EXEC	Makefile	/^EXEC = edas_p$/;"	m
+EnQueue	LinkQueue.c	/^Status EnQueue(LinkQueue *Q, QElemType *e)$/;"	f
+FALSE	LinkQueue.h	8;"	d
+FileDeviceName	common.h	7;"	d
+FileName	common.h	16;"	d
+FilePath	common.h	17;"	d
+FileRecordRecord	handlefile.c	6;"	d	file:
+File_CUR_READ	edas_p.c	/^int File_CUR_READ = 0;  $/;"	v
+File_Trans_State	common.h	/^}File_Trans_State;$/;"	t	typeref:enum:__anon24
+File_UPLOADING	edas_p.c	/^int File_UPLOADING = 0;  $/;"	v
+Fmt	readcfg.h	/^	char Fmt;$/;"	m	struct:__anon22
+Fmt	readcfg.h	/^  uint8_t	  Fmt;$/;"	m	struct:__anon15
+GPS_RCV_QUEUE_SIZE	can.h	121;"	d
+GetEdasPid	netstat.c	/^int GetEdasPid()$/;"	f
+GetHead	LinkQueue.c	/^Status GetHead(LinkQueue Q, QElemType *e) $/;"	f
+GetNetStat	net3g.c	/^int GetNetStat( )$/;"	f
+GetNetStat	netstat.c	/^int GetNetStat( )$/;"	f
+GetTtyACM0Stat	net3g.c	/^int GetTtyACM0Stat( )$/;"	f
+GetTtyACM0Stat	netstat.c	/^int GetTtyACM0Stat( )$/;"	f
+GiFd	edas_rtc.c	/^int GiFd;$/;"	v
+HEAD_RECEIVING	readcfg.c	/^	HEAD_RECEIVING,$/;"	e	enum:__anon1	file:
+HeartBeatReport	edas_p.c	/^void HeartBeatReport(int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+I2C_ADDR	edas_rtc.c	16;"	d	file:
+I2C_SLAVE	edas_rtc.c	13;"	d	file:
+I2C_TENBIT	edas_rtc.c	14;"	d	file:
+I2L	edas_p.c	/^uint8_t I2L[CAN_LOGIC_MAX]; \/*indexnum to logic number*\/   \/*查找I对应具体的逻辑通道值*\/$/;"	v
+ID	readcfg.h	/^	uint32_t ID;$/;"	m	struct:__anon19
+IDLE	common.h	/^  IDLE = 0,$/;"	e	enum:__anon24
+InitQueue	LinkQueue.c	/^Status InitQueue(LinkQueue *Q)$/;"	f
+Init_EDAS_State	common.c	/^void Init_EDAS_State()$/;"	f
+KLINE_5BAUD_INITIALIZE	kline.h	39;"	d
+KLINE_ERR_BUSY	can.h	41;"	d
+KLINE_FAST_INITIALIZE	kline.h	38;"	d
+KLINE_FORMAT_ADDR_MASK	kline.h	33;"	d
+KLINE_FORMAT_LENGTH_MASK	kline.h	32;"	d
+KLINE_HEADER_MODE_2	kline.h	35;"	d
+KLINE_HEADER_MODE_3	kline.h	36;"	d
+KLINE_HW_LOOP_TX	kline.h	58;"	d
+KLINE_INIT_STATE	kline.h	/^ }KLINE_INIT_STATE;$/;"	t	typeref:enum:__anon29
+KLINE_IO_HIGH	kline.h	22;"	d
+KLINE_IO_INPUT	kline.h	19;"	d
+KLINE_IO_LOW	kline.h	23;"	d
+KLINE_IO_OUTPUT	kline.h	20;"	d
+KLINE_LISTENING_MODE	kline.h	43;"	d
+KLINE_NORMAL_MODE	kline.h	42;"	d
+KLINE_RX_BUF_SIZE	kline.h	62;"	d
+KLINE_RX_ENGINE_TYPE	kline.h	/^ }KLINE_RX_ENGINE_TYPE;$/;"	t	typeref:enum:__anon30
+KLINE_RX_STATE_TYPE	kline.h	/^ }KLINE_RX_STATE_TYPE;$/;"	t	typeref:struct:__anon33
+KLINE_STATUS_FASTINIT	kline.h	27;"	d
+KLINE_STATUS_FASTINIT_REQ	kline.h	26;"	d
+KLINE_STATUS_PWRONINIT	kline.h	25;"	d
+KLINE_STATUS_STARTCOM	kline.h	29;"	d
+KLINE_STATUS_WAKEUP	kline.h	28;"	d
+KLINE_STATUS_WORKING	kline.h	30;"	d
+KLINE_TIMING_INIT	kline.h	53;"	d
+KLINE_TIMING_P1_MAX	kline.h	48;"	d
+KLINE_TIMING_P4_MAX	kline.h	51;"	d
+KLINE_TIMING_P4_MIN	kline.h	50;"	d
+KLINE_TIMING_WAKEUP	kline.h	55;"	d
+KLINE_TX_BUF_SIZE	kline.h	61;"	d
+KLINE_TX_ENGINE_TYPE	kline.h	/^ }KLINE_TX_ENGINE_TYPE;$/;"	t	typeref:enum:__anon31
+KLINE_TX_RESULT_TYPE	kline.h	/^}KLINE_TX_RESULT_TYPE;$/;"	t	typeref:enum:__anon32
+KLINE_TX_STATE_TYPE	kline.h	/^ }KLINE_TX_STATE_TYPE;$/;"	t	typeref:struct:__anon34
+KWP_ANSWER_RECEIVED	can.h	40;"	d
+KWP_ERROR	can.h	43;"	d
+KWP_IDLE	can.h	37;"	d
+KWP_USB_CMD_RECEIVED	can.h	38;"	d
+KWP_WAIT_ANSWER	can.h	39;"	d
+K_BREAK	kline.h	7;"	d
+K_IDLE	kline.h	8;"	d
+K_INIT_BREAK	kline.h	/^   K_INIT_BREAK = 0,$/;"	e	enum:__anon29
+K_INIT_DONE	kline.h	11;"	d
+K_INIT_DOWN	kline.h	9;"	d
+K_INIT_ING1	kline.h	/^   K_INIT_ING1,$/;"	e	enum:__anon29
+K_INIT_ING2	kline.h	/^   K_INIT_ING2,$/;"	e	enum:__anon29
+K_INIT_OK	kline.h	/^   K_INIT_OK,$/;"	e	enum:__anon29
+K_INIT_UP	kline.h	10;"	d
+K_RCV15765_QUEUE_SIZE	kline.h	65;"	d
+K_RCV_ALL	kline.h	17;"	d
+K_RCV_BYTE	kline.h	16;"	d
+K_R_TIMEOUT	kline.h	15;"	d
+K_SND_ALL	kline.h	14;"	d
+K_SND_BYTE	kline.h	12;"	d
+K_SND_BYTE_RCV	kline.h	13;"	d
+K_TIMEOUT	kline.h	/^   K_TIMEOUT$/;"	e	enum:__anon29
+KlineInitState	kline.c	/^KLINE_INIT_STATE KlineInitState[2];  $/;"	v
+LINKQUEUE	LinkQueue.h	2;"	d
+LinkQueue	LinkQueue.h	/^}LinkQueue;$/;"	t	typeref:struct:__anon37
+MAX_SIZE	common.h	24;"	d
+MSGID_EDAS_TO_SERVER_CHECK_DATA	common.h	61;"	d
+MSGID_EDAS_TO_SERVER_CONNECT	common.h	58;"	d
+MSGID_EDAS_TO_SERVER_HEART	common.h	63;"	d
+MSGID_EDAS_TO_SERVER_UPLOAD_CPLT	common.h	62;"	d
+MSGID_EDAS_TO_SERVER_UPLOAD_DATA	common.h	60;"	d
+MSGID_EDAS_TO_SERVER_UPLOAD_FILE	common.h	59;"	d
+MSGID_PC_TO_SERVER_CONNECT	common.h	80;"	d
+MSGID_PC_TO_SERVER_EXIT_MNT	common.h	83;"	d
+MSGID_PC_TO_SERVER_HEART	common.h	84;"	d
+MSGID_PC_TO_SERVER_OPEN_MNT	common.h	82;"	d
+MSGID_PC_TO_SERVER_QUERY_ONLINE	common.h	81;"	d
+MSGID_SERVER_TO_EDAS_CHECK_DOWNLOADFILE	common.h	74;"	d
+MSGID_SERVER_TO_EDAS_DOWNLOAD_CFGFILE	common.h	73;"	d
+MSGID_SERVER_TO_EDAS_REPORT_DOWNLOADDONE	common.h	75;"	d
+MSGID_SERVER_TO_EDAS_REQ_DOWNLOAD_CFG	common.h	72;"	d
+MSGID_SERVER_TO_EDAS_RESP_CHECK_DATA	common.h	68;"	d
+MSGID_SERVER_TO_EDAS_RESP_CONNECT	common.h	65;"	d
+MSGID_SERVER_TO_EDAS_RESP_HEART	common.h	70;"	d
+MSGID_SERVER_TO_EDAS_RESP_UPLOAD_CPLT	common.h	69;"	d
+MSGID_SERVER_TO_EDAS_RESP_UPLOAD_DATA	common.h	67;"	d
+MSGID_SERVER_TO_EDAS_RESP_UPLOAD_FILE	common.h	66;"	d
+MSGID_SERVER_TO_PC_RESP_CONNECT	common.h	87;"	d
+MSGID_SERVER_TO_PC_RESP_EXIT_MNT	common.h	90;"	d
+MSGID_SERVER_TO_PC_RESP_HEART	common.h	91;"	d
+MSGID_SERVER_TO_PC_RESP_OPEN_MNT	common.h	89;"	d
+MSGID_SERVER_TO_PC_RESP_QUERY_ONLINE	common.h	88;"	d
+MsgInfo	LinkQueue.h	/^}MsgInfo;$/;"	t	typeref:struct:__anon36
+MsgState_rcv	common.h	94;"	d
+MsgState_snd	common.h	93;"	d
+MyPrintf	common.c	/^void MyPrintf(const char* fmt, ...)$/;"	f
+My_Printf	common.c	/^void My_Printf(char isEn,const char* fmt, ...)$/;"	f
+OBJS	Makefile	/^OBJS = edas_p.o can.o readcfg.o kline.o edas_gpio.c gps.o net3g.o edas_rtc.o uploadingfile.o common.o handlefile.o LinkQueue.o boot.o$/;"	m
+OK	LinkQueue.h	9;"	d
+OVERFLOW	LinkQueue.h	11;"	d
+OffsetCnt	uploadingfile.c	/^volatile unsigned int OffsetCnt;$/;"	v
+OffsetCur	uploadingfile.c	/^volatile unsigned int OffsetCur;$/;"	v
+OffsetList	uploadingfile.c	/^volatile unsigned int OffsetList[20];$/;"	v
+OffsetState	uploadingfile.c	/^volatile unsigned int OffsetState; \/\/0x01: to be translate;0x02:lost offset;0x03:all lost;0x04:file end$/;"	v
+OpenKline	kline.c	/^int OpenKline(void)$/;"	f
+PF_CAN	can.h	17;"	d
+QElemType	LinkQueue.h	/^typedef MsgInfo QElemType;$/;"	t
+QNode	LinkQueue.h	/^typedef struct QNode$/;"	s
+QNode	LinkQueue.h	/^}QNode,*QueuePtr;$/;"	t	typeref:struct:QNode
+QueueEmpty	LinkQueue.c	/^Status QueueEmpty(LinkQueue Q)$/;"	f
+QueueLength	LinkQueue.c	/^int QueueLength(LinkQueue Q)$/;"	f
+QueuePtr	LinkQueue.h	/^}QNode,*QueuePtr;$/;"	t	typeref:struct:QNode
+QueueTraverse	LinkQueue.c	/^Status QueueTraverse(LinkQueue Q, void(*vi)(QElemType))$/;"	f
+READ_STATUS	readcfg.c	/^}READ_STATUS;$/;"	t	typeref:enum:__anon1	file:
+RECORDDIR	common.h	20;"	d
+RECORDPATH	common.h	19;"	d
+REQUEST_UPFILE	common.h	/^  REQUEST_UPFILE,$/;"	e	enum:__anon24
+REQ_CONFIG_COM	readcfg.h	14;"	d
+REQ_CONFIG_SIGNAL	readcfg.h	17;"	d
+REQ_FREE_SRC	readcfg.h	13;"	d
+REQ_START_DAQ	readcfg.h	15;"	d
+REQ_STOP_DAQ	readcfg.h	16;"	d
+RTC_DATA_LEN	edas_rtc.c	17;"	d	file:
+RX_CHKSUM_RECEIVING	kline.h	/^   RX_CHKSUM_RECEIVING,$/;"	e	enum:__anon30
+RX_DATA_RECEIVING	kline.h	/^   RX_DATA_RECEIVING,$/;"	e	enum:__anon30
+RX_END	kline.h	/^   RX_END$/;"	e	enum:__anon30
+RX_HEADER_RECEIVING	kline.h	/^   RX_HEADER_RECEIVING,$/;"	e	enum:__anon30
+RX_IDLE	kline.h	/^   RX_IDLE,$/;"	e	enum:__anon30
+RX_UNINIT	kline.h	/^   RX_UNINIT = 0,$/;"	e	enum:__anon30
+ReadCfg	readcfg.c	/^int ReadCfg()$/;"	f
+Request_collect	uploadingfile.c	/^int Request_collect(int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+Request_upfile	uploadingfile.c	/^int Request_upfile(FILE *fp,int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+Rx_ISO15765_Frame	can.c	/^uint8_t Rx_ISO15765_Frame(struct can_frame *fr,uint8_t channel)$/;"	f
+SDBufferInit	edas_p.c	/^void SDBufferInit( void )$/;"	f
+SD_QUEUE_SIZE	common.h	28;"	d
+SD_buffer	edas_p.c	/^tSD_buffer SD_buffer;$/;"	v
+SIGNAL_AUTH_CODE	readcfg.h	29;"	d
+SIGNAL_DIAG_CAN	readcfg.h	24;"	d
+SIGNAL_DIAG_KLINE	readcfg.h	25;"	d
+SIGNAL_EXTERNAL	readcfg.h	26;"	d
+SIGNAL_GPS	readcfg.h	28;"	d
+SIGNAL_SAE1939	readcfg.h	27;"	d
+STATUS_END	readcfg.c	/^	STATUS_END$/;"	e	enum:__anon1	file:
+STATUS_IDLE	readcfg.c	/^	STATUS_IDLE,$/;"	e	enum:__anon1	file:
+STRIP	Makefile	/^STRIP = $(CROSS)strip$/;"	m
+SendFC	can.c	/^void SendFC(uint8_t channel) $/;"	f
+Status	LinkQueue.h	/^typedef int Status; $/;"	t
+Status	readcfg.h	/^	char Status;$/;"	m	struct:__anon23
+T15_state	edas_p.c	/^int T15_state = 1;$/;"	v
+TP_RX_CF	can.h	/^  TP_RX_CF,$/;"	e	enum:__anon4
+TP_RX_END	can.h	/^  TP_RX_END,$/;"	e	enum:__anon4
+TP_RX_ENGINE_TYPE	can.h	/^}TP_RX_ENGINE_TYPE;$/;"	t	typeref:enum:__anon4
+TP_RX_IDLE	can.h	/^  TP_RX_IDLE = 0,$/;"	e	enum:__anon4
+TP_RX_OVERLOAD	can.h	/^  TP_RX_OVERLOAD$/;"	e	enum:__anon4
+TP_TX_CF	can.h	/^  TP_TX_CF,$/;"	e	enum:__anon5
+TP_TX_END	can.h	/^  TP_TX_END$/;"	e	enum:__anon5
+TP_TX_ENGINE_TYPE	can.h	/^}TP_TX_ENGINE_TYPE;$/;"	t	typeref:enum:__anon5
+TP_TX_FC	can.h	/^  TP_TX_FC,             \/\/2009-11-10, lzy, add for tx flow control frame$/;"	e	enum:__anon5
+TP_TX_IDLE	can.h	/^  TP_TX_IDLE = 0,$/;"	e	enum:__anon5
+TP_TX_REQUEST	can.h	/^  TP_TX_REQUEST,$/;"	e	enum:__anon5
+TP_TX_WAIT_FC	can.h	/^  TP_TX_WAIT_FC,$/;"	e	enum:__anon5
+TRANS_DONE	common.h	/^  TRANS_DONE,$/;"	e	enum:__anon24
+TRANS_STOP	common.h	/^  TRANS_STOP$/;"	e	enum:__anon24
+TRUE	LinkQueue.h	7;"	d
+TX_IDLE	kline.h	/^   TX_IDLE,$/;"	e	enum:__anon31
+TX_OK	kline.h	/^  TX_OK = 1$/;"	e	enum:__anon32
+TX_REQUEST	kline.h	/^   TX_REQUEST$/;"	e	enum:__anon31
+TX_UNINIT	kline.h	/^   TX_UNINIT = 0,$/;"	e	enum:__anon31
+TX_WRONG_DATA	kline.h	/^  TX_WRONG_DATA = 0,$/;"	e	enum:__anon32
+Tester_InterByteTime_ms	readcfg.h	/^    uint8_t    Tester_InterByteTime_ms;$/;"	m	struct:__anon20
+Tester_MaxNewRequestTime_ms	readcfg.h	/^    uint16_t   Tester_MaxNewRequestTime_ms;  $/;"	m	struct:__anon20
+TpRxState	can.c	/^TP_RX_ENGINE_TYPE TpRxState[CAN_LOGIC_MAX];$/;"	v
+TpTxState	can.c	/^TP_TX_ENGINE_TYPE TpTxState[CAN_LOGIC_MAX]; $/;"	v
+TransferDone	uploadingfile.c	/^int TransferDone(int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+Type	readcfg.h	/^	char Type;$/;"	m	struct:__anon23
+UPLOADEDFILELIST	common.h	22;"	d
+UPLOADING_FILE	common.h	/^  UPLOADING_FILE,$/;"	e	enum:__anon24
+UP_DAQ_SIGNAL	common.h	26;"	d
+USB_Flash_Status	can.c	/^uint8_t         USB_Flash_Status[CAN_LOGIC_MAX];$/;"	v
+USB_QUEUE_SIZE	common.h	27;"	d
+US_MILISECOND	common.c	/^volatile unsigned int US_MILISECOND;$/;"	v
+US_SECOND	common.c	/^volatile unsigned int US_SECOND;$/;"	v
+UpdateEdas	boot.c	/^int UpdateEdas(void)$/;"	f
+UploadFile	uploadingfile.c	/^void UploadFile(FILE *fp,int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+Write2SDBuffer	edas_p.c	/^BOOL Write2SDBuffer(FILE *fp,uint8_t* buffer, uint16_t len)$/;"	f
+Write2SDBufferDone	edas_p.c	/^BOOL Write2SDBufferDone(FILE *fp)$/;"	f
+__BOOT_H_	boot.h	2;"	d
+__CAN_H_	can.h	2;"	d
+__COMMON_H_	common.h	2;"	d
+__EDAS_RTC_H	edas_rtc.h	3;"	d
+__KLINE_H_	kline.h	2;"	d
+__NET3G_H_	net3g.h	2;"	d
+__READCFG_H_	readcfg.h	2;"	d
+__UPLOADING_H_	uploadingfile.h	2;"	d
+addr_can0	can.c	/^struct sockaddr_can addr_can0,addr_can1;$/;"	v	typeref:struct:sockaddr_can
+addr_can1	can.c	/^struct sockaddr_can addr_can0,addr_can1;$/;"	v	typeref:struct:
+auth_code	readcfg.c	/^unsigned char auth_code[509]={0};$/;"	v
+b	can.h	/^  uint8_t   b[4];$/;"	m	union:uCANID
+b15765rcv	edas_p.c	/^uint8_t b15765rcv;$/;"	v
+bIsGpsValid	readcfg.c	/^uint8_t bIsGpsValid;$/;"	v
+bIsValid	readcfg.h	/^    uint8_t    bIsValid;$/;"	m	struct:__anon20
+bIsValid	readcfg.h	/^    uint8_t  bIsValid;$/;"	m	struct:__anon18
+bKlineTxReady	kline.c	/^uint8_t bKlineTxReady;$/;"	v
+blocknum	common.h	/^  uint8_t		blocknum;$/;"	m	struct:__anon28
+bps_buf	can.c	/^tGPS_RCV_QUEUE bps_buf;$/;"	v
+buf	can.h	/^ 	struct can_frame buf[CANBUFSIZE];$/;"	m	struct:__anon8	typeref:struct:__anon8::can_frame
+buf	common.h	/^	unsigned char buf[1024];$/;"	m	struct:__anon27
+byte	common.h	/^typedef unsigned char 		byte;$/;"	t
+cData	readcfg.c	/^char cData[10];$/;"	v
+cProgramName	readcfg.c	/^char cProgramName[8] = "EDAS_P";$/;"	v
+cTime	readcfg.c	/^char cTime[8];$/;"	v
+can0filter	can.c	/^struct can_filter can0filter[100];$/;"	v	typeref:struct:can_filter
+can0ft_cnt	can.c	/^int can0ft_cnt = 0;$/;"	v
+can0queue	can.c	/^tRAWCAN_RCV_QUEUE can0queue,can1queue;$/;"	v
+can15765buf	can.c	/^tCAN_RCV15765_QUEUE can15765buf;$/;"	v
+can1939buf	can.c	/^tCAN_RCV1939_QUEUE can1939buf[2];$/;"	v
+can1filter	can.c	/^struct can_filter can1filter[100];$/;"	v	typeref:struct:can_filter
+can1ft_cnt	can.c	/^int can1ft_cnt = 0;$/;"	v
+can1queue	can.c	/^tRAWCAN_RCV_QUEUE can0queue,can1queue;$/;"	v
+can_channel	readcfg.c	/^tCAN_COM_CONFIG can_channel[CAN_CHANNEL_MAX];$/;"	v
+can_logic	readcfg.c	/^tCAN_LOGIC_CONFIG can_logic[CAN_LOGIC_MAX];\/*0~3:for CAN0;4-7:for CAN1*\/$/;"	v
+can_logic_num	readcfg.c	/^uint8_t can_logic_num = 0;$/;"	v
+can_signal	readcfg.c	/^tCAN_SIGNAL can_signal[CAN_SIGNAL_MAX];$/;"	v
+canfcnt	readcfg.c	/^int canfcnt[2];$/;"	v
+canfilter	readcfg.c	/^struct can_filter canfilter[2][100];$/;"	v	typeref:struct:can_filter
+canid_diag_cnt	readcfg.c	/^unsigned int  canid_diag_cnt[2];$/;"	v
+canid_diag_id	readcfg.c	/^unsigned int  canid_diag_id[2][8];$/;"	v
+chan	readcfg.h	/^	uint8_t chan;$/;"	m	struct:__anon19
+channel	readcfg.h	/^    uint8_t channel;$/;"	m	struct:__anon17
+checkdata	uploadingfile.c	/^int checkdata(unsigned char *buf,unsigned int n)$/;"	f
+chksum	common.c	/^void chksum(char *buf,int len)$/;"	f
+chksum	common.h	/^  uint32_t		chksum;$/;"	m	struct:__anon28
+cnt	can.h	/^	char cnt;	$/;"	m	struct:__anon8
+cnt	can.h	/^  uint16_t      cnt;                    \/* frame counter in queue *\/$/;"	m	struct:__anon6
+cnt	can.h	/^  uint8_t      cnt;                    \/* frame counter in queue *\/$/;"	m	struct:__anon12
+cnt	can.h	/^  uint8_t      cnt;                    \/* frame counter in queue *\/$/;"	m	struct:__anon13
+cnt	can.h	/^  uint8_t      cnt;                    \/* frame counter in queue *\/$/;"	m	struct:__anon14
+cnt	can.h	/^  uint8_t      cnt;                    \/* frame counter in queue *\/$/;"	m	struct:__anon7
+cnt	common.h	/^  uint16_t		cnt; 				  \/*cnt[0] for queue0 data cnt; cnt[1] for queue1 data cnt *\/$/;"	m	struct:__anon28
+cnt	kline.h	/^  uint8_t      cnt;                    \/* frame counter in queue *\/$/;"	m	struct:__anon35
+commaIndex	gps.c	/^unsigned char commaIndex = 0;$/;"	v
+commaLocation	gps.c	/^unsigned char commaLocation[20]; $/;"	v
+creatFileName	common.c	/^void creatFileName(unsigned char *name)$/;"	f
+creat_FileName	common.c	/^void creat_FileName(unsigned char *ptPath,unsigned char *name)$/;"	f
+cur3gfilename	edas_p.c	/^char cur3gfilename[100];$/;"	v
+cur3gfilename_len	edas_p.c	/^int cur3gfilename_len;$/;"	v
+curMsgstate	common.c	/^tMsgState curMsgstate;$/;"	v
+curTransFile	handlefile.c	/^int curTransFile = -1;$/;"	v
+curTransFileName	net3g.c	/^char curTransFileName[255];$/;"	v
+curnetstat	net3g.c	/^int curnetstat= -1;$/;"	v
+currenLogicChan	edas_p.c	/^int currenLogicChan;$/;"	v
+currentKlinelid	kline.c	/^uint32_t currentKlinelid;$/;"	v
+currentLidlen	edas_p.c	/^uint8_t currentLidlen;$/;"	v
+currentMSize	edas_p.c	/^volatile uint32_t currentMSize;$/;"	v
+currentlid	edas_p.c	/^volatile uint32_t currentlid;$/;"	v
+data	LinkQueue.h	/^ QElemType data;$/;"	m	struct:QNode
+data	can.h	/^  tMSG      data[CAN_RX_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon6
+data	can.h	/^  tMSG      data[CAN_TX_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon7
+data	can.h	/^  uint8_t      data[24];          \/* 8 x data bytes *\/$/;"	m	struct:__anon9
+data	can.h	/^  uint8_t      data[300];          \/* 8 x data bytes *\/$/;"	m	struct:__anon10
+data	can.h	/^  uint8_t      data[50];          \/* 8 x data bytes *\/$/;"	m	struct:__anon11
+data	can.h	/^  uint8_t      data[8];          \/* 8 x data bytes *\/$/;"	m	struct:__anon3
+data	can.h	/^  uint8_t      data[8];          \/*8 x data bytes *\/$/;"	m	struct:__anon2
+data	common.h	/^  uint8_t		data[SD_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon28
+dataLength	kline.h	/^  uint16_t dataLength;$/;"	m	struct:__anon33
+db_sd_free	edas_p.c	/^volatile double db_sd_free; $/;"	v
+detect3g	net3g.c	/^int detect3g = 0;$/;"	v
+diag_msg_max	readcfg.c	/^uint32_t diag_msg_max[2] = {0};$/;"	v
+dl	can.h	/^  uint8_t      dl;               \/* DL(4 bit) *\/$/;"	m	struct:__anon3
+dl	can.h	/^  uint8_t      dl;               \/*data length value *\/$/;"	m	struct:__anon2
+doResponseConnect	uploadingfile.c	/^void doResponseConnect( MsgInfo *msg)$/;"	f
+doRspCheckCfgFile	uploadingfile.c	/^void doRspCheckCfgFile( MsgInfo *msg)$/;"	f
+doRspCheckUploadData	uploadingfile.c	/^void doRspCheckUploadData( MsgInfo *msg)$/;"	f
+doRspDownloadCfgFile	uploadingfile.c	/^void doRspDownloadCfgFile( MsgInfo *msg)$/;"	f
+doRspReportCfgFileDone	uploadingfile.c	/^void doRspReportCfgFileDone( MsgInfo *msg)$/;"	f
+doRspReqDownloadCfg	uploadingfile.c	/^void doRspReqDownloadCfg( MsgInfo *msg)$/;"	f
+doRspUploadDone	uploadingfile.c	/^void doRspUploadDone( MsgInfo *msg)$/;"	f
+doRspUploadFileRes	uploadingfile.c	/^void doRspUploadFileRes( MsgInfo *msg)$/;"	f
+dug_3g	common.h	48;"	d
+dug_can	common.h	46;"	d
+dug_gps	common.h	45;"	d
+dug_k	common.h	47;"	d
+dug_readcfg	common.h	44;"	d
+dug_rtc	common.h	49;"	d
+dug_sd	common.h	50;"	d
+dug_sys	common.h	51;"	d
+dwEcuID	readcfg.h	/^    uint32_t dwEcuID;$/;"	m	struct:__anon17
+dwEcuID	readcfg.h	/^    uint32_t dwEcuID[CHAN_LOGIC_MAX];$/;"	m	struct:__anon18
+dwLocalID	readcfg.h	/^	uint32_t dwLocalID;$/;"	m	struct:__anon16
+dwLocalID	readcfg.h	/^    uint32_t dwLocalID;$/;"	m	struct:__anon21
+dwNextCommTime	readcfg.h	/^	uint32_t dwNextCommTime;    $/;"	m	struct:__anon16
+dwNextTime	readcfg.h	/^	uint32_t dwNextTime;$/;"	m	struct:__anon21
+dwTesterID	readcfg.h	/^    uint32_t dwTesterID;$/;"	m	struct:__anon17
+dwTesterID	readcfg.h	/^    uint32_t dwTesterID[CHAN_LOGIC_MAX];$/;"	m	struct:__anon18
+edas_3g_off	edas_gpio.h	34;"	d
+edas_3g_restarthi	edas_gpio.h	39;"	d
+edas_3g_restartlo	edas_gpio.h	40;"	d
+edas_3g_start	edas_gpio.h	36;"	d
+edas_3g_stop	edas_gpio.h	37;"	d
+edas_3g_work	edas_gpio.h	33;"	d
+edas_led_erroff	edas_gpio.h	52;"	d
+edas_led_erron	edas_gpio.h	51;"	d
+edas_led_koff	edas_gpio.h	55;"	d
+edas_led_kon	edas_gpio.h	54;"	d
+edas_led_rxoff	edas_gpio.h	46;"	d
+edas_led_rxon	edas_gpio.h	45;"	d
+edas_led_txoff	edas_gpio.h	49;"	d
+edas_led_txon	edas_gpio.h	48;"	d
+edas_led_usboff	edas_gpio.h	43;"	d
+edas_led_usbon	edas_gpio.h	42;"	d
+edas_pid	netstat.c	/^int edas_pid = 0;$/;"	v
+edas_power_off	edas_gpio.h	31;"	d
+edas_power_on	edas_gpio.h	30;"	d
+edas_wd_off	edas_gpio.h	58;"	d
+edas_wd_on	edas_gpio.h	57;"	d
+engine	kline.h	/^  KLINE_RX_ENGINE_TYPE engine;$/;"	m	struct:__anon33
+engine	kline.h	/^  KLINE_TX_ENGINE_TYPE engine;$/;"	m	struct:__anon34
+fc_count	can.c	/^uint16_t    fc_count[CAN_LOGIC_MAX] = {0};$/;"	v
+fd_adc	edas_gpio.c	/^int fd_adc;$/;"	v
+fd_gpio	edas_gpio.c	/^int fd_gpio;$/;"	v
+fd_k	common.c	/^int fd_k = -1;$/;"	v
+fileTransState	net3g.c	/^File_Trans_State fileTransState;$/;"	v
+filename	common.h	/^	unsigned char filename[255];$/;"	m	struct:__anon26
+fileoldscnt	handlefile.c	/^int fileoldscnt;$/;"	v
+filesOldRecord	handlefile.c	/^tFilesRecord  filesOldRecord[100];$/;"	v
+filesRecord	handlefile.c	/^tFilesRecord  filesRecord[100];$/;"	v
+filescnt	handlefile.c	/^int filescnt;$/;"	v
+filesize	uploadingfile.c	/^volatile int filesize;$/;"	v
+flag	common.h	/^	int flag;       \/\/ 0:no trans 1:transce half 2:trans done	$/;"	m	struct:__anon26
+flag_rcvd	uploadingfile.c	/^unsigned int flag_rcvd;$/;"	v
+fp_curTrans	net3g.c	/^FILE *fp_curTrans;$/;"	v
+fp_curfile_t	edas_p.c	/^FILE *fp_curfile_t;$/;"	v
+front	LinkQueue.h	/^ QueuePtr front; \/* 队头指针 *\/$/;"	m	struct:__anon37
+g_3gState	edas_p.c	/^unsigned int g_3gState = 0;$/;"	v
+g_3gTryCnt	edas_p.c	/^volatile unsigned int g_3gTryCnt = 0;$/;"	v
+g_FileSizeofCfg	edas_p.c	/^volatile int g_FileSizeofCfg;$/;"	v
+g_LastRcvCnt	edas_p.c	/^unsigned int g_LastRcvCnt = 0;$/;"	v
+g_Rcv3gCnt	edas_p.c	/^unsigned int g_Rcv3gCnt = 0;$/;"	v
+g_ServerIP	edas_p.c	/^char g_ServerIP[20];$/;"	v
+g_ServerPort	edas_p.c	/^char g_ServerPort[10];$/;"	v
+g_SysCnt	edas_p.c	/^unsigned int g_SysCnt;$/;"	v
+g_TimeoutCnt	edas_p.c	/^unsigned int g_TimeoutCnt = 0;$/;"	v
+g_addr	uploadingfile.c	/^struct sockaddr_in g_addr;$/;"	v	typeref:struct:sockaddr_in
+g_cfgFile	edas_p.c	/^char g_cfgFile[5120];$/;"	v
+g_cfgFileblock	edas_p.c	/^volatile int g_cfgFileblock = 0;$/;"	v
+g_cfgFilecnt	edas_p.c	/^int g_cfgFilecnt[10] = {0};$/;"	v
+g_edas_state	common.c	/^volatile tEDAS_P_STATE g_edas_state;$/;"	v
+g_file_mutex	edas_p.c	/^pthread_mutex_t g_file_mutex;$/;"	v
+g_fp_cfg	edas_p.c	/^FILE *g_fp_cfg; $/;"	v
+g_fp_cfg_state	edas_p.c	/^volatile int g_fp_cfg_state = 0;$/;"	v
+g_fp_curTrans_state	net3g.c	/^int g_fp_curTrans_state = -1;$/;"	v
+g_isDownloadCfg	edas_p.c	/^volatile int g_isDownloadCfg = 0;$/;"	v
+g_mutex	LinkQueue.c	/^pthread_mutex_t g_mutex; $/;"	v
+g_pppd_pid	edas_p.c	/^volatile int g_pppd_pid = 0;$/;"	v
+g_read_cur_offset	uploadingfile.c	/^volatile unsigned int g_read_cur_offset;$/;"	v
+g_rtc_mutex	edas_p.c	/^pthread_mutex_t g_rtc_mutex;$/;"	v
+g_rtc_state	gps.c	/^char g_rtc_state = 0; \/\/0x00: wait update rtc; 0x01: update done$/;"	v
+getFilesName	handlefile.c	/^void getFilesName()$/;"	f
+getFilesRecords	handlefile.c	/^void getFilesRecords()$/;"	f
+getSDstatus	common.c	/^int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free)$/;"	f
+getSystemTime	common.c	/^unsigned int getSystemTime()$/;"	f
+get_rtctime	edas_rtc.c	/^int get_rtctime(unsigned char *rx_buf)$/;"	f
+gps_buff	gps.c	/^unsigned char gps_buff[80];$/;"	v
+gps_height	gps.c	/^char gps_height[15]; $/;"	v
+gps_index	gps.c	/^unsigned char gps_index;$/;"	v
+gps_latitude	gps.c	/^char gps_latitude[15];$/;"	v
+gps_latitude_du	gps.c	/^char gps_latitude_du[15];$/;"	v
+gps_latitude_fen	gps.c	/^char gps_latitude_fen[15];$/;"	v
+gps_longitude	gps.c	/^char gps_longitude[15];    $/;"	v
+gps_longitude_du	gps.c	/^char gps_longitude_du[15]; $/;"	v
+gps_longitude_fen	gps.c	/^char gps_longitude_fen[15]; $/;"	v
+gps_speed	gps.c	/^char gps_speed[15];$/;"	v
+gps_utcdate	gps.c	/^char gps_utcdate[15]; $/;"	v
+gps_utctime	gps.c	/^char gps_utctime[15];$/;"	v
+gpsflg	gps.c	/^char gpsflg = 0; \/\/0x01:latitude;0x02:longitude;0x04:speed;0x08:height;$/;"	v
+handl_K_rcvdata	kline.c	/^void handl_K_rcvdata(unsigned char *pbuf,int len)$/;"	f
+handle_15765	can.c	/^static void handle_15765(struct can_frame *fr,int chan,int msg_no)$/;"	f	file:
+handle_1939	can.c	/^static void handle_1939(struct can_frame *fr,int chan)$/;"	f	file:
+headerLength	kline.h	/^  uint8_t  headerLength;$/;"	m	struct:__anon33
+height	common.c	/^volatile double height;$/;"	v
+id	can.h	/^  tCANID       id;               \/* message id *\/$/;"	m	struct:__anon3
+id	can.h	/^  tCANID     id;               \/*message id *\/$/;"	m	struct:__anon2
+ifr_can0	can.c	/^struct ifreq ifr_can0,ifr_can1;$/;"	v	typeref:struct:ifreq
+ifr_can1	can.c	/^struct ifreq ifr_can0,ifr_can1;$/;"	v	typeref:struct:
+init_3g_net	net3g.c	/^void init_3g_net()$/;"	f
+init_adc	edas_gpio.c	/^void init_adc()$/;"	f
+init_gpio	edas_gpio.c	/^void init_gpio()$/;"	f
+inq	can.c	/^volatile tCAN_RX_QUEUE inq[CAN_LOGIC_MAX];$/;"	v
+int2bcd	edas_rtc.c	/^char int2bcd(int num)$/;"	f
+is3gsocket	net3g.c	/^int is3gsocket = 0;$/;"	v
+is3gvalid	net3g.c	/^int is3gvalid = 0;$/;"	v
+isSaveGps	readcfg.c	/^int isSaveGps = 0;$/;"	v
+is_T15_on	edas_gpio.c	/^int is_T15_on()  \/\/t15 on:iRes =2413$/;"	f
+itoa	common.c	/^char *itoa(int num, char *str, int radix)$/;"	f
+k15765buf	kline.c	/^tK_RCV15765_QUEUE k15765buf;$/;"	v
+kConsecutiveFrame	can.h	28;"	d
+kErrorFrame	can.h	31;"	d
+kFirstFrame	can.h	27;"	d
+kFlowControlFrame	can.h	29;"	d
+kFlowStatus_Overrun	can.h	30;"	d
+kRxTimeout	can.h	34;"	d
+kSingleFrame	can.h	26;"	d
+kTxTimeout	can.h	33;"	d
+k_rcv_last_time	kline.c	/^uint32_t k_rcv_last_time;$/;"	v
+kline_BaudRate	kline.c	/^uint32_t kline_BaudRate;   \/\/2011-09-30$/;"	v
+kline_P1Max	kline.c	/^uint32_t	kline_P1Max;    \/\/?????, ???? 0 - 20ms$/;"	v
+kline_P2Max	kline.c	/^uint32_t  kline_P2Max;    \/\/?????, ???? 0 - 1000ms$/;"	v
+kline_P3Max	kline.c	/^uint32_t  kline_P3Max;    \/\/?????, ???? 0 - 5000ms$/;"	v
+kline_P4	kline.c	/^uint32_t	kline_P4;       \/\/?????, ???? 0 - 20ms$/;"	v
+kline_RxBuf	kline.c	/^uint8_t kline_RxBuf[KLINE_RX_BUF_SIZE];$/;"	v
+kline_RxErrCnt	kline.c	/^static uint16_t kline_RxErrCnt;$/;"	v	file:
+kline_RxState	kline.c	/^KLINE_RX_STATE_TYPE kline_RxState;$/;"	v
+kline_Status	kline.c	/^uint8_t kline_Status;$/;"	v
+kline_TxBuf	kline.c	/^uint8_t kline_TxBuf[KLINE_TX_BUF_SIZE];$/;"	v
+kline_TxState	kline.c	/^KLINE_TX_STATE_TYPE kline_TxState;$/;"	v
+kline_UsbBuff	kline.c	/^uint8_t  kline_UsbBuff[KLINE_RX_BUF_SIZE];$/;"	v
+kline_UsbCmd_Status	kline.c	/^uint8_t  kline_UsbCmd_Status = 0;  $/;"	v
+kline_UsbDataLength	kline.c	/^uint16_t kline_UsbDataLength;$/;"	v
+kline_WorkingMode	kline.c	/^uint16_t kline_WorkingMode;$/;"	v
+kline_channel	readcfg.c	/^uint8_t kline_channel;$/;"	v
+kline_config	readcfg.c	/^tKLINE_CONFIG kline_config[2];$/;"	v
+kline_siganl	readcfg.c	/^tKLINE_SIGNAL kline_siganl[50];$/;"	v
+kwp_head_command	readcfg.c	/^tKWP_USB_HEAD kwp_head_command;$/;"	v
+l	can.h	/^  uint32_t   l;$/;"	m	union:uCANID
+laststat	netstat.c	/^int laststat=0;$/;"	v
+latitude	common.c	/^volatile double latitude;$/;"	v
+latitude_du	common.c	/^int latitude_du;$/;"	v
+led_Rx_blink	edas_gpio.c	/^void led_Rx_blink(int num)$/;"	f
+led_Tx_blink	edas_gpio.c	/^void led_Tx_blink(int num)$/;"	f
+led_k_blink	edas_gpio.c	/^void led_k_blink(int num)$/;"	f
+led_usb_blink	edas_gpio.c	/^void led_usb_blink()$/;"	f
+len	LinkQueue.h	/^	unsigned int 	len;$/;"	m	struct:__anon36
+len	can.h	/^  uint16_t     len;               \/* message id *\/$/;"	m	struct:__anon10
+len	can.h	/^  uint16_t     len;               \/* message id *\/$/;"	m	struct:__anon11
+len	can.h	/^  uint16_t     len;               \/* message id *\/$/;"	m	struct:__anon9
+len	common.h	/^	int len;$/;"	m	struct:__anon27
+length	kline.h	/^  uint16_t length;$/;"	m	struct:__anon34
+longitude	common.c	/^volatile double longitude;    $/;"	v
+longitude_du	common.c	/^int longitude_du;$/;"	v
+main	edas_p.c	/^void main(int argc,char *argv[])$/;"	f
+main	netstat.c	/^int main()$/;"	f
+makeKillCommand	common.c	/^void makeKillCommand(char *command,int pid)$/;"	f
+max	common.h	/^  uint16_t		max;					\/* max data in queue *\/$/;"	m	struct:__anon28
+msgRxTimeoutCnt	uploadingfile.c	/^int msgRxTimeoutCnt = 0;$/;"	v
+msg_queue	edas_p.c	/^LinkQueue msg_queue;$/;"	v
+msgid	common.h	/^	unsigned char msgid;$/;"	m	struct:__anon27
+nInitFrmLen	readcfg.h	/^    uint8_t    nInitFrmLen;$/;"	m	struct:__anon20
+nLogicDiagChanNum	readcfg.h	/^    uint8_t  nLogicDiagChanNum;$/;"	m	struct:__anon18
+n_rcv	uploadingfile.c	/^unsigned int n_rcv;$/;"	v
+next	LinkQueue.h	/^ struct QNode *next;$/;"	m	struct:QNode	typeref:struct:QNode::QNode
+noFileTransCnt	net3g.c	/^int noFileTransCnt = 0;$/;"	v
+offset	common.h	/^	int offset;$/;"	m	struct:__anon26
+openSerial	gps.c	/^static int openSerial(char *cSerialName)$/;"	f	file:
+outq	can.c	/^volatile tCAN_TX_QUEUE outq[CAN_LOGIC_MAX];$/;"	v
+powerOffCnt	net3g.c	/^int powerOffCnt = 0;$/;"	v
+pt_logic_can	readcfg.h	/^    tCAN_LOGIC_CONFIG *pt_logic_can[CHAN_LOGIC_MAX];$/;"	m	struct:__anon18
+pt_signal	readcfg.h	/^    tCAN_SIGNAL *pt_signal[50];$/;"	m	struct:__anon17
+qdata	can.h	/^  tRCV15765data      qdata[CAN_RCV15765_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon14
+qdata	can.h	/^  tRCV1939data      qdata[CAN_RCV1939_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon13
+qdata	can.h	/^  tRcvGpsData      qdata[GPS_RCV_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon12
+qdata	kline.h	/^  tRCV15765data      qdata[K_RCV15765_QUEUE_SIZE];   \/* frame data *\/$/;"	m	struct:__anon35
+queuefull	common.h	/^  uint8_t		queuefull;				\/*queue full,if queue 0 full,bit0=1;if queue 1 full,bit1=1;*\/$/;"	m	struct:__anon28
+rawcaninit	can.c	/^void rawcaninit()$/;"	f
+rbuf	uploadingfile.c	/^unsigned char rbuf[MAX_SIZE];$/;"	v
+reSndCnt	common.h	/^	int reSndCnt;$/;"	m	struct:__anon27
+readflag	kline.c	/^int readflag = 0;$/;"	v
+rear	LinkQueue.h	/^ QueuePtr rear;  \/* 队尾指针 *\/$/;"	m	struct:__anon37
+record_filename	edas_p.c	/^unsigned char record_filename[255];$/;"	v
+reinit_3g_net	net3g.c	/^void reinit_3g_net()$/;"	f
+req_rcv	uploadingfile.c	/^unsigned int req_rcv;$/;"	v
+reserve1	readcfg.h	/^	uint8_t reserve1;$/;"	m	struct:__anon16
+reserve1	readcfg.h	/^    uint8_t    reserve1;$/;"	m	struct:__anon20
+reserve1	readcfg.h	/^    uint8_t  reserve1;$/;"	m	struct:__anon17
+reserve1	readcfg.h	/^    uint8_t reserve1;$/;"	m	struct:__anon21
+reserve2	readcfg.h	/^	uint8_t reserve2;$/;"	m	struct:__anon16
+reserve2	readcfg.h	/^    uint8_t    reserve2;$/;"	m	struct:__anon20
+reserve2	readcfg.h	/^    uint8_t  reserve2;$/;"	m	struct:__anon17
+reserve2	readcfg.h	/^    uint8_t reserve2;$/;"	m	struct:__anon21
+rp	can.h	/^	char rp;$/;"	m	struct:__anon8
+rp	can.h	/^  uint16_t      rp;                     \/* read pointer *\/$/;"	m	struct:__anon6
+rp	can.h	/^  uint8_t      rp;                     \/* read pointer *\/$/;"	m	struct:__anon12
+rp	can.h	/^  uint8_t      rp;                     \/* read pointer *\/$/;"	m	struct:__anon13
+rp	can.h	/^  uint8_t      rp;                     \/* read pointer *\/$/;"	m	struct:__anon14
+rp	can.h	/^  uint8_t      rp;                     \/* read pointer *\/$/;"	m	struct:__anon7
+rp	kline.h	/^  uint8_t      rp;                     \/* read pointer *\/$/;"	m	struct:__anon35
+rsv	can.h	/^  uint8_t      rsv;              \/*not used *\/$/;"	m	struct:__anon2
+rxIndex	kline.h	/^  uint16_t rxIndex;   $/;"	m	struct:__anon33
+s_can0	can.c	/^int s_can0,s_can1;$/;"	v
+s_can1	can.c	/^int s_can0,s_can1;$/;"	v
+saveUploadSuccessFileList	uploadingfile.c	/^void saveUploadSuccessFileList(char *filePathName,int size)$/;"	f
+sd_free	edas_p.c	/^volatile unsigned int sd_free;$/;"	v
+sd_total	edas_p.c	/^volatile unsigned int sd_total;$/;"	v
+sd_used	edas_p.c	/^volatile unsigned int sd_used;$/;"	v
+sendUdpMsg	uploadingfile.c	/^void sendUdpMsg(char *buf,int len,unsigned char rxMsgId)$/;"	f
+set_rtctime	edas_rtc.c	/^int set_rtctime(unsigned char *cst)$/;"	f
+siganl_kline_num	readcfg.c	/^uint8_t siganl_kline_num = 0;$/;"	v
+signal_can_num	readcfg.c	/^uint8_t signal_can_num = 0;$/;"	v
+socketCanInit	can.c	/^int socketCanInit(int chan)$/;"	f
+sockfd	common.c	/^int sockfd;$/;"	v
+speed	common.c	/^volatile double speed;$/;"	v
+start3G	edas_gpio.c	/^void start3G()$/;"	f
+state	common.h	/^	unsigned char state;$/;"	m	struct:__anon27
+state_T15	common.h	/^	char state_T15;$/;"	m	struct:__anon25
+state_can0_15765	common.h	/^	char state_can0_15765;$/;"	m	struct:__anon25
+state_can0_1939	common.h	/^	char state_can0_1939;$/;"	m	struct:__anon25
+state_can1_15765	common.h	/^	char state_can1_15765;	$/;"	m	struct:__anon25
+state_can1_1939	common.h	/^	char state_can1_1939;$/;"	m	struct:__anon25
+state_cfg	common.h	/^	char state_cfg;$/;"	m	struct:__anon25
+state_gps	common.h	/^	char state_gps;$/;"	m	struct:__anon25
+state_k	common.h	/^	char state_k;$/;"	m	struct:__anon25
+tCAN1939	readcfg.h	/^}tCAN1939;$/;"	t	typeref:struct:__anon19
+tCANID	can.h	/^}tCANID;$/;"	t	typeref:union:uCANID
+tCAN_COM_CONFIG	readcfg.h	/^}tCAN_COM_CONFIG;$/;"	t	typeref:struct:__anon18
+tCAN_LOGIC_CONFIG	readcfg.h	/^}tCAN_LOGIC_CONFIG;$/;"	t	typeref:struct:__anon17
+tCAN_RCV15765_QUEUE	can.h	/^}tCAN_RCV15765_QUEUE;$/;"	t	typeref:struct:__anon14
+tCAN_RCV1939_QUEUE	can.h	/^}tCAN_RCV1939_QUEUE;$/;"	t	typeref:struct:__anon13
+tCAN_RX_QUEUE	can.h	/^}tCAN_RX_QUEUE;$/;"	t	typeref:struct:__anon6
+tCAN_SIGNAL	readcfg.h	/^}tCAN_SIGNAL;$/;"	t	typeref:struct:__anon16
+tCAN_TX_QUEUE	can.h	/^}tCAN_TX_QUEUE;$/;"	t	typeref:struct:__anon7
+tEDAS_P_STATE	common.h	/^}tEDAS_P_STATE;$/;"	t	typeref:struct:__anon25
+tFilesRecord	common.h	/^}tFilesRecord;$/;"	t	typeref:struct:__anon26
+tGPS_RCV_QUEUE	can.h	/^}tGPS_RCV_QUEUE;$/;"	t	typeref:struct:__anon12
+tHEADER	readcfg.h	/^}tHEADER;$/;"	t	typeref:struct:__anon22
+tKLINE_CONFIG	readcfg.h	/^}tKLINE_CONFIG;$/;"	t	typeref:struct:__anon20
+tKLINE_SIGNAL	readcfg.h	/^}tKLINE_SIGNAL;$/;"	t	typeref:struct:__anon21
+tKWP_USB_HEAD	readcfg.h	/^}tKWP_USB_HEAD;$/;"	t	typeref:struct:__anon15
+tK_RCV15765_QUEUE	kline.h	/^}tK_RCV15765_QUEUE;$/;"	t	typeref:struct:__anon35
+tMSG	can.h	/^}tMSG;$/;"	t	typeref:struct:__anon3
+tMsgState	common.h	/^}tMsgState;$/;"	t	typeref:struct:__anon27
+tRAWCAN_RCV_QUEUE	can.h	/^}tRAWCAN_RCV_QUEUE;$/;"	t	typeref:struct:__anon8
+tRCV15765data	can.h	/^}tRCV15765data;$/;"	t	typeref:struct:__anon10
+tRCV1939data	can.h	/^}tRCV1939data;$/;"	t	typeref:struct:__anon9
+tRXBUF	can.h	/^}tRXBUF;$/;"	t	typeref:struct:__anon2
+tRcvGpsData	can.h	/^}tRcvGpsData;$/;"	t	typeref:struct:__anon11
+tSD_buffer	common.h	/^}tSD_buffer;$/;"	t	typeref:struct:__anon28
+tTYPE_HEADER	readcfg.h	/^}tTYPE_HEADER;$/;"	t	typeref:struct:__anon23
+task_ChkSndFile	net3g.c	/^void task_ChkSndFile()$/;"	f
+task_can	edas_p.c	/^void task_can()$/;"	f
+task_can0_read	can.c	/^void task_can0_read()$/;"	f
+task_can1_read	can.c	/^void task_can1_read()$/;"	f
+task_canTP	edas_p.c	/^void task_canTP()$/;"	f
+task_check_msgrx	uploadingfile.c	/^void task_check_msgrx()$/;"	f
+task_gps	gps.c	/^void task_gps()$/;"	f
+task_handle_msg	uploadingfile.c	/^void task_handle_msg()$/;"	f
+task_heartbeat	net3g.c	/^void task_heartbeat()$/;"	f
+task_k	kline.c	/^void task_k()$/;"	f
+task_sd	edas_p.c	/^void task_sd()$/;"	f
+task_udprcv	uploadingfile.c	/^void task_udprcv()$/;"	f
+task_wd	edas_gpio.c	/^void task_wd()$/;"	f
+test_cnt	edas_p.c	/^int test_cnt = 0;$/;"	v
+testbuf	uploadingfile.c	/^char testbuf[] = {0x01,0x02,0x03,0x04,0x05,0x06,0x00,0x00,0x0a};$/;"	v
+timer	kline.h	/^  uint32_t timer;$/;"	m	struct:__anon33
+timer	kline.h	/^  uint32_t timer;$/;"	m	struct:__anon34
+tsr	can.h	/^  uint16_t       tsr;              \/*time stamp register *\/$/;"	m	struct:__anon2
+txIndex	kline.h	/^  uint16_t txIndex;   $/;"	m	struct:__anon34
+uCANID	can.h	/^typedef union uCANID$/;"	u
+ucBSmax	can.c	/^uint8_t     ucBSmax[CAN_LOGIC_MAX] = {0};$/;"	v
+ucBuff	LinkQueue.h	/^	unsigned char   ucBuff[1024];           $/;"	m	struct:__anon36
+ucCheckSum	LinkQueue.h	/^	unsigned char   ucCheckSum;       \/\/oíD￡?é$/;"	m	struct:__anon36
+ucDiagType	readcfg.h	/^    uint8_t    ucDiagType;$/;"	m	struct:__anon20
+ucDiagType	readcfg.h	/^    uint8_t  ucDiagType;$/;"	m	struct:__anon17
+ucInitFrmData	readcfg.h	/^    uint8_t    ucInitFrmData[10];$/;"	m	struct:__anon20
+ucKlineFastInitCnt	kline.c	/^uint8_t  ucKlineFastInitCnt = 0;$/;"	v
+ucLidLength	readcfg.h	/^	uint8_t  ucLidLength;  \/\/add$/;"	m	struct:__anon16
+ucLidLength	readcfg.h	/^	uint8_t ucLidLength;$/;"	m	struct:__anon21
+ucLogicChanIndex	readcfg.h	/^	uint8_t  ucLogicChanIndex;	$/;"	m	struct:__anon16
+ucLogicChanIndex	readcfg.h	/^	uint8_t  ucLogicChanIndex;$/;"	m	struct:__anon21
+ucLogicChanIndex	readcfg.h	/^    uint8_t    ucLogicChanIndex;$/;"	m	struct:__anon20
+ucLogicChanIndex	readcfg.h	/^    uint8_t  ucLogicChanIndex;      \/\/ucRdDatSerID -->ucLogicChanIndex$/;"	m	struct:__anon17
+ucLogicChanNum	readcfg.h	/^    uint8_t ucLogicChanNum;$/;"	m	struct:__anon18
+ucLogicKIndex	kline.c	/^uint8_t ucLogicKIndex;$/;"	v
+ucMemSize	readcfg.h	/^	uint8_t  ucMemSize;$/;"	m	struct:__anon16
+ucMemSize	readcfg.h	/^	uint8_t ucMemSize;$/;"	m	struct:__anon21
+ucRdDatSerID	readcfg.h	/^	uint8_t  ucRdDatSerID;$/;"	m	struct:__anon16
+ucRdDatSerID	readcfg.h	/^	uint8_t  ucRdDatSerID;$/;"	m	struct:__anon21
+ucRxBuff	can.c	/^uint8_t  ucRxBuff[CAN_LOGIC_MAX][268];$/;"	v
+ucRxSn	can.c	/^uint8_t     ucRxSn[CAN_LOGIC_MAX];$/;"	v
+ucServeId	LinkQueue.h	/^	unsigned char   ucServeId;       $/;"	m	struct:__anon36
+ucSignalNum	readcfg.h	/^    uint8_t ucSignalNum;$/;"	m	struct:__anon17
+ucTSmin	can.c	/^uint8_t     ucTSmin[CAN_LOGIC_MAX] = {1};$/;"	v
+ucTimestampType	readcfg.c	/^char ucTimestampType = 2;$/;"	v
+ucTxSn	can.c	/^uint8_t     ucTxSn[CAN_LOGIC_MAX];$/;"	v
+ucTxTimer	can.c	/^uint8_t     ucTxTimer[CAN_LOGIC_MAX];$/;"	v
+uiRxDataLength	can.c	/^uint16_t uiRxDataLength[CAN_LOGIC_MAX];$/;"	v
+uiRxIndex	can.c	/^uint16_t    uiRxIndex[CAN_LOGIC_MAX];$/;"	v
+uiRxReminder	can.c	/^uint16_t    uiRxReminder[CAN_LOGIC_MAX];$/;"	v
+uiRxTimer	can.c	/^uint16_t    uiRxTimer[CAN_LOGIC_MAX];$/;"	v
+uiTxDataLength	can.c	/^uint16_t uiTxDataLength[CAN_LOGIC_MAX];$/;"	v
+uiTxIndex	can.c	/^uint16_t    uiTxIndex[CAN_LOGIC_MAX];$/;"	v
+uiTxReminder	can.c	/^uint16_t    uiTxReminder[CAN_LOGIC_MAX];$/;"	v
+uint16_t	common.h	/^typedef unsigned short      uint16_t;$/;"	t
+uint32_t	common.h	/^typedef unsigned int 		uint32_t;$/;"	t
+uint8_t	common.h	/^typedef unsigned char 		uint8_t;$/;"	t
+ulFlashRxId	edas_p.c	/^int ulFlashRxId[3],ulFlashTxId[3];$/;"	v
+ulFlashTxId	edas_p.c	/^int ulFlashRxId[3],ulFlashTxId[3];$/;"	v
+upDateTime	common.c	/^void upDateTime()$/;"	f
+updateAuthCode	readcfg.c	/^void updateAuthCode()$/;"	f
+uploadingfile	uploadingfile.c	/^int uploadingfile(FILE *fp,int sockfd,const struct sockaddr_in *addr,int len)$/;"	f
+utc2cst	edas_rtc.c	/^void utc2cst(unsigned char *utc,unsigned char *cst)$/;"	f
+w	can.h	/^  uint16_t   w[2];$/;"	m	union:uCANID
+wBaudrate	readcfg.h	/^    uint16_t   wBaudrate;$/;"	m	struct:__anon20
+wBaudrate	readcfg.h	/^    uint16_t wBaudrate;$/;"	m	struct:__anon18
+wSampleCyc	readcfg.h	/^	uint16_t wSampleCyc;$/;"	m	struct:__anon16
+wSampleCyc	readcfg.h	/^    uint16_t wSampleCyc;$/;"	m	struct:__anon21
+wp	can.h	/^	char wp;$/;"	m	struct:__anon8
+wp	can.h	/^  uint16_t      wp;                     \/* write pointer *\/$/;"	m	struct:__anon6
+wp	can.h	/^  uint8_t      wp;                     \/* write pointer *\/$/;"	m	struct:__anon12
+wp	can.h	/^  uint8_t      wp;                     \/* write pointer *\/$/;"	m	struct:__anon13
+wp	can.h	/^  uint8_t      wp;                     \/* write pointer *\/$/;"	m	struct:__anon14
+wp	can.h	/^  uint8_t      wp;                     \/* write pointer *\/$/;"	m	struct:__anon7
+wp	kline.h	/^  uint8_t      wp;                     \/* write pointer *\/$/;"	m	struct:__anon35
+writeFilesRecords	handlefile.c	/^void writeFilesRecords()$/;"	f
+year_monthdays	edas_rtc.c	/^const char year_monthdays[2][13] = {{0,31,28,31,30,31,30,31,31,30,31,30,31}$/;"	v

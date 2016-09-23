@@ -1,5 +1,7 @@
 EXEC = edas_p
-OBJS = edas_p.o can.o readcfg.o kline.o edas_gpio.c gps.o net3g.o edas_rtc.o uploadingfile.o common.o handlefile.o LinkQueue.o boot.o
+
+OBJS = sd.o led.o can.o readcfg.o kline.o gpio.o gps.o net3g.o \
+rtc.o upload_file.o common.o handle_file.o queue.o boot.o task.o power_monitor.o main.o
 
 CROSS = arm-fsl-linux-gnueabi-
 CC = $(CROSS)gcc
@@ -12,4 +14,4 @@ $(EXEC):$(OBJS)
 	$(STRIP) $@
 
 clean:
-	-rm -f $(EXEC) *.o
+	-rm -f $(EXEC) *.o *~

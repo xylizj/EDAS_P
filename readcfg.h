@@ -21,12 +21,12 @@
 #define DOWN_CONFIG_SIGNAL  0x06
 
 
-/**/ #define SIGNAL_DIAG_CAN    		0x01
-/**/ #define SIGNAL_DIAG_KLINE 	 		0x02
-/**/ #define SIGNAL_EXTERNAL    		0x03
-/**/ #define SIGNAL_SAE1939     		0x04
-/**/ #define SIGNAL_GPS         		0x05
-/**/ #define SIGNAL_AUTH_CODE	0x06
+#define SIGNAL_DIAG_CAN    		0x01
+#define SIGNAL_DIAG_KLINE 	 		0x02
+#define SIGNAL_EXTERNAL    		0x03
+#define SIGNAL_SAE1939     		0x04
+#define SIGNAL_GPS         		0x05
+#define SIGNAL_AUTH_CODE	0x06
 
 
 typedef struct
@@ -113,8 +113,30 @@ typedef struct
 	uint32_t dwNextTime;
 }tKLINE_SIGNAL;
 
+//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_CFG.txt"
+//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawDataStream.ers"
+//#define EDASCFGFILE        "/media/sd-mmcblk0p1/test_1939_eec1.ers"
+//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawData15765.ers"
+//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawDataStream_EDC7_K.ers"
+//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_CFG_20141217.ers"
+#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_P_CFG.ers"
+
+ typedef struct
+{
+	char Fmt;
+	char BlockNum;
+	short DataLen;
+}tHEADER;
+
+ typedef struct
+{
+	char Type;
+	char Status;
+	short BlockSize;
+}tTYPE_HEADER;
 
 
+/*Global variable*/
 extern unsigned char auth_code[509];
 
 extern tKWP_USB_HEAD kwp_head_command;
@@ -143,7 +165,10 @@ extern unsigned int  canid_diag_id[2][8];
 extern unsigned int  canid_diag_cnt[2];
 
 
-extern void updateAuthCode();
+/*Global function*/
+extern void read_edas_cfg(void);
+extern void read_user_cfgset(void);
+extern void updateAuthCode(void);
 
 
 #endif
