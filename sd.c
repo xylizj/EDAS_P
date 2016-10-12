@@ -1,24 +1,26 @@
+#include <stdlib.h>
+#include "common.h"
 #include "sd.h"
 
-unsigned int sd_total;
-unsigned int sd_used;
-unsigned int sd_free;
-unsigned int db_sd_free; 
 tSD_buffer SD_buffer;
+struct _sd_info sd_info;
 
 void SDBufferInit( void )
 {
     SD_buffer.queuefull = 0;
-
     SD_buffer.cnt = 4;
     SD_buffer.max = SD_QUEUE_SIZE-200;
+	SD_buffer.data = (uint8_t *)calloc(1,SD_QUEUE_SIZE);
 }
 
 void Write2SDBuffer(FILE *fp,uint8_t* buffer, uint16_t len)
 {
 	uint16_t i;
 	static uint32_t nextupdatetime = 1000;	//if timeout, send data to wince,frequence is 200ms
-	if(SD_buffer.cnt != 4)
+	if(NULL == SD_buffer.data)
+		return;
+
+	//if(SD_buffer.cnt != 4)
 	if((SD_buffer.blocknum >= 200)||(getSystemTime() > nextupdatetime)||(len >= SD_buffer.max -SD_buffer.cnt))
 	{			
 		nextupdatetime = getSystemTime()+200;//if timeout, send data to wince,frequence is 100ms
@@ -41,8 +43,7 @@ void Write2SDBuffer(FILE *fp,uint8_t* buffer, uint16_t len)
 		SD_buffer.cnt = 4;
 		SD_buffer.blocknum = 0;
 		SD_buffer.chksum = 0;	
-		//write to sdcard;
-		
+		//write to sdcard;		
 	}
 	memcpy(&SD_buffer.data[SD_buffer.cnt],buffer,len);
 	SD_buffer.blocknum++;
@@ -52,6 +53,9 @@ void Write2SDBuffer(FILE *fp,uint8_t* buffer, uint16_t len)
 void Write2SDBufferDone(FILE *fp)
 {			
 	int i;
+
+	if(NULL == SD_buffer.data)
+		return;
 	//nextupdatetime = getSystemTime+200;//if timeout, send data to wince,frequence is 100ms
 	SD_buffer.data[0] = 0x5A;
 	SD_buffer.data[1] = SD_buffer.blocknum;
@@ -72,7 +76,9 @@ void Write2SDBufferDone(FILE *fp)
 	SD_buffer.cnt = 4;
 	SD_buffer.blocknum = 0;
 	SD_buffer.chksum = 0;	
-	//write to sdcard;
-	fclose(fp);	
-}
 
+	fclose(fp);	
+
+	free(SD_buffer.data);
+	SD_buffer.data = NULL;
+}

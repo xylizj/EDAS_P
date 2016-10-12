@@ -5,22 +5,17 @@
 #include "recfile.h"
 
 
-
-
-
-int curTransFile = -1;
-
 tFilesRecord  filesRecord[RECORD_NUM_MAX];
 tFilesRecord  filesOldRecord[RECORD_NUM_MAX];
-int filescnt;
-int fileoldscnt;
+unsigned char *auth_code;//unsigned char auth_code[509]={0};
 
+
+struct _recfile_info recfile_info;
 
 
 void get_recfile_list(void)
 {
 	FILE *fp;
-	int fsize;
 	char buff[RECORD_NUM_MAX];
 	
 	fp = fopen(RECORD_FILE_LIST,"r");
@@ -38,19 +33,22 @@ void get_recfile_list(void)
 			switch(buff[0])
 			{
 				case '$':  //file name
-					memcpy(filesOldRecord[fileoldscnt].filename,&buff[1],strlen(buff)-1);
-					break;
+				filesOldRecord[recfile_info.fileoldscnt].filename = (char *)malloc(strlen(buff)-1);
+				if(NULL != filesOldRecord[recfile_info.fileoldscnt].filename){
+					memcpy(filesOldRecord[recfile_info.fileoldscnt].filename,&buff[1],strlen(buff)-1);
+				}
+				break;
 				//case '#':  //offset
-				//	filesOldRecord[fileoldscnt].offset = atoi(buff);
+				//	filesOldRecord[recfile_info.fileoldscnt].offset = atoi(buff);
 				//	break;
 				case '*':  //flag
-					filesOldRecord[fileoldscnt].flag = buff[1]-'0';
-					fileoldscnt++;
+					filesOldRecord[recfile_info.fileoldscnt].flag = buff[1]-'0';
+					recfile_info.fileoldscnt++;
 					break;
 				default: 
 					break;
 			}
-			if(fileoldscnt >= RECORD_NUM_MAX) 
+			if(recfile_info.fileoldscnt >= RECORD_NUM_MAX) 
 				break;
 		}			
 	}
@@ -64,7 +62,7 @@ void get_recfile_name(void)
 	DIR *dirptr = NULL;
 	struct dirent *entry;
 	int i;
-	int cnt;
+	int cnt = 0;
 		
 	if((dirptr = opendir(RECORDDIR)) == NULL)
 	{
@@ -74,7 +72,7 @@ void get_recfile_name(void)
 	else
 	{
 		printf_va_args("get_recfile_name ok\n");
-		while (entry = readdir(dirptr))
+		while ((entry = readdir(dirptr)) != NULL)
 		{			
 			printf_va_args("%s\n", entry->d_name);
 
@@ -83,27 +81,34 @@ void get_recfile_name(void)
 				continue;
 			}
 
-			cnt = 0;
-			memset(filesRecord[cnt].filename,0,255);
-			strcpy(filesRecord[cnt].filename,entry->d_name);
+			filesRecord[cnt].filename = (char *)malloc(strlen(filesRecord[recfile_info.filescnt].filename));
+			if(NULL != filesRecord[cnt].filename)
+			{
+				memset(filesRecord[cnt].filename,0,strlen(filesRecord[recfile_info.filescnt].filename));
+				strcpy(filesRecord[cnt].filename,entry->d_name);
 
-			filesRecord[cnt].flag = 0;
-			filesRecord[cnt].offset = 0;
-			
-			for(i=0; i<fileoldscnt; i++)
-			{				
-				if(memcmp(filesRecord[cnt].filename,filesOldRecord[i].filename,strlen(filesRecord[filescnt].filename))==0)
-				{
-					filesRecord[cnt].flag = filesOldRecord[i].flag;
-					filesRecord[cnt].offset = filesOldRecord[i].offset;
-					break;					
+				filesRecord[cnt].flag = 0;
+				filesRecord[cnt].offset = 0;
+				
+				for(i=0; i<recfile_info.fileoldscnt; i++)
+				{				
+					if(NULL != filesOldRecord[i].filename){
+						if(memcmp(filesRecord[cnt].filename,filesOldRecord[i].filename,strlen(filesRecord[recfile_info.filescnt].filename))==0)
+						{
+							free(filesOldRecord[i].filename);
+							filesOldRecord[i].filename = NULL;
+							filesRecord[cnt].flag = filesOldRecord[i].flag;
+							filesRecord[cnt].offset = filesOldRecord[i].offset;
+							break;					
+						}
+					}
 				}
+				cnt++;		
+				
+				recfile_info.filescnt = cnt;
+				if(cnt >= RECORD_NUM_MAX) 
+					break;
 			}
-			cnt++;		
-			
-			filescnt = cnt;
-			if(cnt >= RECORD_NUM_MAX) 
-				break;
 		}
 		closedir(dirptr);
 	}
@@ -118,18 +123,23 @@ void save_recfile_list(void)
 	
 	fp = fopen(RECORD_FILE_LIST,"w");
 
-	for(i=0; i<filescnt; i++)
+	for(i=0; i<recfile_info.filescnt; i++)
 	{
-		memset(buf,0,RECORD_NUM_MAX);
-		buf[0] = '$';
-		memcpy(&buf[1],filesRecord[i].filename,strlen(filesRecord[i].filename));
-		fwrite(buf,strlen(buf),1,fp);
-		fwrite("\n",1,1,fp);
-		memset(buf,0,RECORD_NUM_MAX);
-		buf[0] = '*';
-		buf[1] = '0' + filesRecord[i].flag;
-		fwrite(buf,2,1,fp);
-		fwrite("\n",1,1,fp);	
+		if(NULL != filesRecord[i].filename){
+			memset(buf,0,RECORD_NUM_MAX);
+			buf[0] = '$';
+			memcpy(&buf[1],filesRecord[i].filename,strlen(filesRecord[i].filename));
+			fwrite(buf,strlen(buf),1,fp);
+			fwrite("\n",1,1,fp);
+			memset(buf,0,RECORD_NUM_MAX);
+			buf[0] = '*';
+			buf[1] = '0' + filesRecord[i].flag;
+			fwrite(buf,2,1,fp);
+			fwrite("\n",1,1,fp);
+
+			free(filesRecord[i].filename);
+			filesRecord[i].filename = NULL;
+		}
 	}
 
 	fflush(fp);

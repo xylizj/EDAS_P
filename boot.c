@@ -1,15 +1,6 @@
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
- 
-#include <sys/types.h>  
-#include <sys/stat.h>  
-#include <fcntl.h>
-
-#include <signal.h> 
-#include <sys/time.h> 
-#include "common.h"
+#include <stdlib.h>
+#include <unistd.h>
 #include "boot.h"
 
 int update_boot(void)
@@ -23,13 +14,12 @@ int update_boot(void)
 		if(fread(buf, sizeof(char), 200-1, fp) > 0)
 		{
 			remove("/root/edas_p");
-			//system("rm /root/edas_p");
 			sleep(1);
 			system("cp /media/sd-mmcblk0p1/boot/edas_p /root/");
 			sleep(1);
 			remove("/media/sd-mmcblk0p1/boot/edas_p");
-			#if dug_sys > 0
-			printf_va_args("upDateEdas_reboot!\n");
+			#if DEBUG_SYS > 0
+			printf_va_args("Update EDAS finished! reboot!\n");
 			#endif
 			sleep(1);			
 			system("reboot");
@@ -40,11 +30,3 @@ int update_boot(void)
 
 	return 1;
 }
-
-
-
-
-
-
-
-

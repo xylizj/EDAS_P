@@ -1,7 +1,7 @@
 #ifndef __CAN_H_
 #define __CAN_H_
 
-#include <sys/ioctl.h>
+
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <linux/socket.h>
@@ -154,8 +154,14 @@ typedef struct
   tRCV15765data      qdata[CAN_RCV15765_QUEUE_SIZE];   /* frame data */
 }tCAN_RCV15765_QUEUE;
 
+struct _can_struct 
+{
+	int socket;
+};
 
-extern int s_can0,s_can1;
+extern struct _can_struct can_struct[CAN_CHANNEL_MAX];
+
+
 extern tCAN_RCV1939_QUEUE can1939buf[2];
 
 extern TP_RX_ENGINE_TYPE TpRxState[CAN_LOGIC_MAX];
@@ -163,7 +169,6 @@ extern TP_TX_ENGINE_TYPE TpTxState[CAN_LOGIC_MAX];
 
 extern volatile tCAN_RX_QUEUE inq[CAN_LOGIC_MAX];
 extern volatile tCAN_TX_QUEUE outq[CAN_LOGIC_MAX];
-extern uint16_t uiTxDataLength[CAN_LOGIC_MAX];
 
 extern uint16_t    uiRxIndex[CAN_LOGIC_MAX];
 extern uint8_t     ucRxSn[CAN_LOGIC_MAX];
@@ -194,14 +199,15 @@ extern tCAN_RCV15765_QUEUE can15765buf;
 
 
 
-//extern void task_can0_read();
-//extern void task_can1_read();
 extern uint8_t Rx_ISO15765_Frame(struct can_frame *fr,uint8_t channel);
 extern void handle_1939(struct can_frame *fr,int chan);
 extern void handle_15765(struct can_frame *fr,int chan,int msg_no);
 extern void up_can0(void);
 extern void up_can1(void);
 extern void can_info_process(void);
+extern uint8_t DirectCanTransmit(uint8_t logchan);
+extern void Can_TxConfirmation(uint8_t logchan,uint8_t result);
+extern void Can_ErrIndication(uint8_t logchan,uint8_t errCode);
 
 
 

@@ -2,13 +2,12 @@
 #define __READCFG_H_
 
 
-#include "common.h"
-#include <net/if.h>
-#include <linux/socket.h>
-#include <linux/can.h>
-#include <linux/can/error.h>
-#include <linux/can/raw.h>
+#include "kline.h"
 #include "can.h"
+#include "common.h"
+
+#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_P_CFG.ers"
+
 
 #define REQ_FREE_SRC        0x01
 #define REQ_CONFIG_COM      0x02
@@ -22,11 +21,11 @@
 
 
 #define SIGNAL_DIAG_CAN    		0x01
-#define SIGNAL_DIAG_KLINE 	 		0x02
+#define SIGNAL_DIAG_KLINE 	 	0x02
 #define SIGNAL_EXTERNAL    		0x03
 #define SIGNAL_SAE1939     		0x04
 #define SIGNAL_GPS         		0x05
-#define SIGNAL_AUTH_CODE	0x06
+#define SIGNAL_AUTH_CODE	    0x06
 
 
 typedef struct
@@ -81,47 +80,13 @@ typedef struct
 	uint8_t chan;
 }tCAN1939;
 
- typedef struct
- {
-    uint8_t    bIsValid;
-    uint8_t    ucDiagType;
 
-    uint16_t   wBaudrate;
-    uint8_t    Tester_InterByteTime_ms;
-    uint8_t    ECU_MaxInterByteTime_ms;
-    uint16_t   ECU_MaxResponseTime_ms;
-    uint16_t   Tester_MaxNewRequestTime_ms;  
 
-    uint8_t    nInitFrmLen;
-    uint8_t    ucInitFrmData[10];
-    uint8_t    ucLogicChanIndex;
-    uint8_t    reserve1;
-    uint8_t    reserve2;
-}tKLINE_CONFIG;
+
+
 
 
 typedef struct
-{
-    uint32_t dwLocalID;
-	uint8_t  ucRdDatSerID;
-	uint8_t ucLidLength;
-	uint8_t ucMemSize;
-	uint8_t  ucLogicChanIndex;
-    uint16_t wSampleCyc;
-    uint8_t reserve1;
-    uint8_t reserve2;
-	uint32_t dwNextTime;
-}tKLINE_SIGNAL;
-
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_CFG.txt"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawDataStream.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/test_1939_eec1.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawData15765.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EdasRawDataStream_EDC7_K.ers"
-//#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_CFG_20141217.ers"
-#define EDASCFGFILE        "/media/sd-mmcblk0p1/EDAS_P_CFG.ers"
-
- typedef struct
 {
 	char Fmt;
 	char BlockNum;
@@ -135,31 +100,22 @@ typedef struct
 	short BlockSize;
 }tTYPE_HEADER;
 
+typedef enum
+{
+	STATUS_IDLE,
+	HEAD_RECEIVING,
+	DATA_RECEIVING,
+	CHKSUM_RECEIVING,
+	STATUS_END
+}READ_STATUS;
 
 /*Global variable*/
-extern unsigned char auth_code[509];
-
-extern tKWP_USB_HEAD kwp_head_command;
-extern tKLINE_CONFIG kline_config[2];
-
-extern uint32_t diag_msg_max[2];
 extern tCAN_COM_CONFIG can_channel[CAN_CHANNEL_MAX];
 extern tCAN_LOGIC_CONFIG can_logic[CAN_LOGIC_MAX];/*0~3:for CAN0;4-7:for CAN1*/
 extern tCAN_SIGNAL can_signal[CAN_SIGNAL_MAX];
-extern uint8_t signal_can_num;
 extern uint8_t can_logic_num;
-
-extern tKLINE_SIGNAL kline_siganl[50];
-extern uint8_t siganl_kline_num;
-
-extern uint32_t CANID_1939[50];
-extern uint8_t  CAN_1939_num;
-
-extern tKLINE_CONFIG kline_config[2];
-extern uint8_t kline_channel;
-extern uint8_t bIsGpsValid;
 extern int canfcnt[2];
-extern struct can_filter canfilter[2][100];
+extern struct can_filter canfilter[CAN_CHANNEL_MAX][100];
 
 extern unsigned int  canid_diag_id[2][8];
 extern unsigned int  canid_diag_cnt[2];
@@ -167,7 +123,7 @@ extern unsigned int  canid_diag_cnt[2];
 
 /*Global function*/
 extern void read_edas_cfg(void);
-extern void read_user_cfgset(void);
+extern void acquire_user_cfgset(void);
 extern void updateAuthCode(void);
 
 

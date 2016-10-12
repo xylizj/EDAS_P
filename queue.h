@@ -16,7 +16,7 @@ typedef struct
 {
 	unsigned char   ucServeId;       
 	unsigned char   ucBuff[1024];           
-	unsigned char   ucCheckSum;       //o¨ªD¡ê?¨¦
+	unsigned char   ucCheckSum;
 	unsigned int 	len;
 }MsgInfo;
 

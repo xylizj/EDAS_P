@@ -3,7 +3,6 @@
 
 
 #include <stdbool.h>
-#include <stdarg.h>
 #include "queue.h"
 
 #define FileDeviceName "/devicename.txt"
@@ -31,18 +30,17 @@
 
 #define DUG_PRINTF_EN 1
 #define DUG_1939 	1
-#define DUG_KLINE 	1
 
 
 
-#define  dug_readcfg	1
-#define  dug_gps		1
-#define  dug_can		1
-#define  dug_k			1
-#define  dug_3g			1
-#define  dug_rtc		1
-#define  dug_sd			1
-#define  dug_sys		1
+#define  DEBUG_CFG	1
+#define  DEBUG_GPS		0
+#define  DEBUG_CAN		0
+#define  DEBUG_K			0
+#define  DEBUG_3G			1
+#define  DEBUG_RTC		0
+#define  DEBUG_SD			1
+#define  DEBUG_SYS		1
 
 #define EDASCFG_TMP        "/EDAS_P_CFG.ers"
 
@@ -87,33 +85,6 @@
 #define MsgState_snd 0x00
 #define MsgState_rcv 0x01
 
-typedef enum
-{
-  IDLE = 0,
-  REQUEST_UPFILE,
-  UPLOADING_FILE,
-  CHECK_FILE,
-  TRANS_DONE,
-  TRANS_STOP
-}File_Trans_State;
-
-
-/*tEDAS_P_STATE  0:stop work, 1:working nomally, 2:not configuration*/
-typedef struct
-{
-	//char state_cfg;
-	char state_T15;
-	char state_3g;
-	volatile int pppd_pid;
-	char net_stat;
-	char state_gps;
-	char state_k;
-	char state_can0_1939;
-	char state_can1_1939;
-	char state_can0_15765;
-	char state_can1_15765;	
-}tEDAS_P_STATE;
-
 typedef unsigned char 		uint8_t;
 typedef unsigned short int       uint16_t;
 typedef unsigned int 		uint32_t;
@@ -123,79 +94,63 @@ typedef unsigned char 		byte;
 
 
 
+/*tEDAS_P_STATE  0:stop work, 1:working nomally, 2:not configuration*/
+typedef struct
+{
+	char state_cfg;
+	char state_T15;
+	char state_gps;
+	char state_k;
+	char state_can0_1939;
+	char state_can1_1939;
+	char state_can0_15765;
+	char state_can1_15765;	
+	char state_rtc; //0x00: wait update rtc; 0x01: update done
+	char state_3g;
+	volatile int pppd_pid;
+	char net_stat;
+	bool downloading_cfg;
+	char *CAR_ID;
+	unsigned int DeviceID;
+	char savegps;
+	unsigned int t15down_3gtries;
+}tEDAS_P_STATE;
+
 
 typedef struct
 {
 	unsigned char msgid;
 	unsigned char state;
-	unsigned char buf[1024];
+	char buf[1024];
 	int reSndCnt;
 	int len;
+	int rx_to_cnt;
+	LinkQueue queue;
 }tMsgState;
 
 
 
 
-extern volatile double latitude;
-extern volatile double longitude;    
-extern volatile double speed;
-extern volatile double height;
 
 
 extern volatile unsigned int US_SECOND;
 extern volatile unsigned int US_MILISECOND;
-
-
-
-extern int sockfd;
-
-
-
-
-
-extern char CAR_ID[40];
-extern char T15_state;
-
-extern int detect3g;
-extern int is3gvalid;
-extern int is3gsocket;
-extern LinkQueue msg_queue;
 extern tMsgState curMsgstate;
-extern int msgRxTimeoutCnt;
-extern File_Trans_State fileTransState;
-extern int curTransFile;
-extern char curTransFileName[255];
-extern FILE *fp_curTrans;
-extern int isSaveGps;
-extern unsigned int DeviceID;
-extern int g_fp_curTrans_state;
 
-extern unsigned int g_SysCnt;
-extern unsigned int g_Rcv3gCnt;
-
-extern unsigned int g_LastRcvCnt;
-extern unsigned int g_3gState;
-//extern volatile int g_pppd_pid;
-extern char curnetstat;
-extern char g_ServerIP[20];
-extern char g_ServerPort[10];
-
-
-extern bool g_isDownloadCfg;
 extern volatile tEDAS_P_STATE g_sys_info;
-extern volatile unsigned int g_read_cur_offset;
-extern char g_rtc_state;
+
+
 
 extern pthread_mutex_t g_file_mutex;
 extern pthread_mutex_t g_rtc_mutex;
 
-extern void sendUdpMsg(char *buf,int len,unsigned char rxMsgId);
 
 extern unsigned int getSystemTime(void);
-extern void chksum(uint8_t *buf,int len);
-extern void upDateTime(void);
+extern void chksum(char *buf,int len);
+extern int checkdata(unsigned char *buf,unsigned int n);
+extern void update_time(void);
 
-extern void creat_FileName(unsigned char *ptPath,unsigned char *name);
+extern void creat_FileName(char *ptPath, char *name);
 
 extern char *itoa(int num, char *str, int radix);
 extern void reinit_3g_net(void);

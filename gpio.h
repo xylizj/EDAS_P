@@ -1,6 +1,7 @@
 #ifndef __GPIO_H_
 #define __GPIO_H_
 
+#include<sys/ioctl.h>
 
 #define EDAS_POWERON 		11
 #define EDAS_POWEROFF		10
@@ -29,6 +30,7 @@
 #define EDAS_WD_ON			100
 #define EDAS_WD_OFF			101
 
+extern int fd_gpio;
 
 #define edas_power_on()		ioctl(fd_gpio, EDAS_POWERON)
 #define edas_power_off()	ioctl(fd_gpio, EDAS_POWEROFF)
@@ -61,18 +63,13 @@
 #define edas_wd_off()		ioctl(fd_gpio, EDAS_WD_OFF)
 
 
-extern int fd_gpio;
 
-int is_T15_on();
-void init_gpio();
-void init_adc();
-void start3G();
+extern int is_T15_on(void);
+extern void init_gpio(void);
+extern void init_adc(void);
+extern void start3G(void);
 
-void led_usb_blink();
-void led_k_blink(int num);
-void led_Tx_blink(int num);
-void led_Rx_blink(int num);
-void task_wd();
+
 
 
 #endif/* __GPIO_H_*/

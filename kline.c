@@ -1,60 +1,25 @@
-#include <stdio.h>
-#include <stdlib.h> 
-#include <unistd.h>  
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h> 
 #include <termios.h>
-#include <errno.h>   
-#include <limits.h> 
-#include <asm/ioctls.h>
-#include <time.h>
-#include <string.h>
+//#include <errno.h>   
 
-
-#include "gpio.h"
-#include "common.h"
 #include "readcfg.h"
 #include "kline.h"
 
 
 
-#define DATA_LEN                0xFF 
-uint16_t kline_WorkingMode;
-
 KLINE_INIT_STATE KlineInitState[2];  
-
-
-uint8_t  ucKlineFastInitCnt = 0;
-uint8_t  kline_UsbCmd_Status = 0;  
-uint8_t  kline_UsbBuff[KLINE_RX_BUF_SIZE];
-uint16_t kline_UsbDataLength;
+tKLINE_CONFIG kline_config[2];
+tKLINE_SIGNAL *kline_siganl[50];//tKLINE_SIGNAL kline_siganl[50];
+uint8_t k_sig_num = 0;
 
 KLINE_TX_STATE_TYPE kline_TxState;
 KLINE_RX_STATE_TYPE kline_RxState;
-uint8_t kline_TxBuf[KLINE_TX_BUF_SIZE];
-uint8_t kline_RxBuf[KLINE_RX_BUF_SIZE];
-uint8_t kline_Status;
 
-static uint16_t kline_RxErrCnt;
-
-uint16_t kline_WorkingMode;
-
-uint8_t bKlineTxReady;
-uint32_t kline_BaudRate;   //2011-09-30
-
-uint32_t	kline_P4;       //?????, ???? 0 - 20ms
-uint32_t	kline_P1Max;    //?????, ???? 0 - 20ms
-uint32_t  kline_P2Max;    //?????, ???? 0 - 1000ms
-uint32_t  kline_P3Max;    //?????, ???? 0 - 5000ms
-
-uint32_t k_rcv_last_time;
-
-tK_RCV15765_QUEUE k15765buf;
+tK_RCV15765_QUEUE k15765queue;
 
 
-//#define B10400 0000014
-#define B10400 0010017
+
 
 
 
@@ -67,17 +32,15 @@ int OpenKline(void)
 	struct termios opt;
 	
 	l_fd_k = open("/dev/ttySP0", O_RDWR | O_NOCTTY | O_NDELAY); 
-	//fd_k = open("/dev/ttySP0", O_RDWR | O_NOCTTY);
 	if(l_fd_k < 0) 
 	{
 		perror("/dev/ttySP0");
 		return -1;
 	}
 	
-	//tcgetattr(fd_k, &opt); 
 	if(tcgetattr(l_fd_k, &opt)<0)
 	{
-#if dug_k > 0
+#if DEBUG_K > 0
 		printf_va_args("kline tcgetattr error\n");
 #endif
 		return -1;
@@ -107,9 +70,8 @@ int OpenKline(void)
 
 
 
-void handl_K_rcvdata(unsigned char *pbuf,int len)
+void handl_K_rcvdata(unsigned char *pbuf)
 {
-	int i;
 	if ( ( (pbuf[0]& KLINE_FORMAT_ADDR_MASK) == KLINE_HEADER_MODE_2)|| \
                 ( (pbuf[0]& KLINE_FORMAT_ADDR_MASK) == KLINE_HEADER_MODE_3) )
     {
@@ -128,15 +90,6 @@ void handl_K_rcvdata(unsigned char *pbuf,int len)
     {
         kline_RxState.dataLength = pbuf[3];      
     }	
-
-#if(dug_k > 0)
-	printf_va_args("kline recv %d:",kline_RxState.dataLength);
-	for(i=0;i<len;i++)
-	{
-		printf_va_args(" %02x ",pbuf[i]);
-	}
-	printf_va_args("\n");
-#endif
 }
 
 
@@ -145,7 +98,7 @@ ssize_t read_kfile(int fd, unsigned char *buf, off_t offset, unsigned int to)
 	ssize_t cnt;
 	ssize_t len;
 
-	/*cnt = 0;
+	cnt = 0;
 	while(cnt < offset)
 	{
 		len = read(fd, &buf[cnt], 1);
@@ -153,8 +106,7 @@ ssize_t read_kfile(int fd, unsigned char *buf, off_t offset, unsigned int to)
 		{							
 			cnt += len;
 		}
-	}*/
-	lseek(fd, offset, SEEK_SET);
+	}
 	
 	cnt = 0; 
 	while(to > getSystemTime())
@@ -171,7 +123,3 @@ ssize_t read_kfile(int fd, unsigned char *buf, off_t offset, unsigned int to)
 
 	return 0;
 }
-
-
-
-

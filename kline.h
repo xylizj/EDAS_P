@@ -1,9 +1,13 @@
 #ifndef __KLINE_H_
 #define __KLINE_H_
 
-#include "can.h"
-   /******KLine state************/
-   
+#include "common.h"//for uint32 ...
+#include "can.h"//for tRCV15765data
+
+//#define B10400 0000014
+#define B10400 0010017
+
+/******KLine state************/   
 #define K_BREAK         0
 #define K_IDLE          1
 #define K_INIT_DOWN     2
@@ -63,80 +67,113 @@
 
 
 #define K_RCV15765_QUEUE_SIZE       (int)50
+#define KBUF_SIZE 255
 
 
-  typedef enum
- {
-   K_INIT_BREAK = 0,
-   K_INIT_ING1,
-   K_INIT_ING2,
-   K_INIT_OK,
-   K_TIMEOUT
- }KLINE_INIT_STATE;
-
-
- typedef enum
- {
-   RX_UNINIT = 0,
-   RX_IDLE,
-   RX_HEADER_RECEIVING,
-   RX_DATA_RECEIVING,
-   RX_CHKSUM_RECEIVING,
-   RX_END
- }KLINE_RX_ENGINE_TYPE;
- 
- typedef enum
- {
-   TX_UNINIT = 0,
-   TX_IDLE,
-   TX_REQUEST
- }KLINE_TX_ENGINE_TYPE;
-
- typedef enum
+typedef enum
 {
-  TX_WRONG_DATA = 0,
-  TX_OK = 1
-}KLINE_TX_RESULT_TYPE;
+	K_INIT_BREAK = 0,
+	K_INIT_ING1,
+	K_INIT_ING2,
+	K_INIT_OK,
+	K_TIMEOUT
+}KLINE_INIT_STATE;
 
- typedef struct
- {
-  KLINE_RX_ENGINE_TYPE engine;
-  uint32_t timer;
-  uint16_t dataLength;
-  uint8_t  headerLength;
-  uint16_t rxIndex;   
- }KLINE_RX_STATE_TYPE;
+
+typedef enum
+{
+	RX_UNINIT = 0,
+	RX_IDLE,
+	RX_HEADER_RECEIVING,
+	RX_DATA_RECEIVING,
+	RX_CHKSUM_RECEIVING,
+	RX_END
+}KLINE_RX_ENGINE_TYPE;
  
- typedef struct
- {
-  KLINE_TX_ENGINE_TYPE engine;
-  uint32_t timer;
-  uint16_t length;
-  uint16_t txIndex;   
- }KLINE_TX_STATE_TYPE;
+typedef enum
+{
+	TX_UNINIT = 0,
+	TX_IDLE,
+	TX_REQUEST
+}KLINE_TX_ENGINE_TYPE;
+
+typedef enum
+{
+	TX_WRONG_DATA = 0,
+	TX_OK = 1
+}KLINE_TX_RESULT_TYPE;
 
 typedef struct
 {
-  uint8_t      wp;                     /* write pointer */
-  uint8_t      rp;                     /* read pointer */
-  uint8_t      cnt;                    /* frame counter in queue */
-  tRCV15765data      qdata[K_RCV15765_QUEUE_SIZE];   /* frame data */
+	KLINE_RX_ENGINE_TYPE engine;
+	uint32_t timer;
+	uint16_t dataLength;
+	uint8_t  headerLength;
+	uint16_t rxIndex;   
+}KLINE_RX_STATE_TYPE;
+ 
+typedef struct
+{
+	KLINE_TX_ENGINE_TYPE engine;
+	uint32_t timer;
+	uint16_t length;
+	uint16_t txIndex;   
+}KLINE_TX_STATE_TYPE;
+
+typedef struct
+{
+	uint8_t      wp;                     /* write pointer */
+	uint8_t      rp;                     /* read pointer */
+	uint8_t      cnt;                    /* frame counter in queue */
+	tRCV15765data  qdata[K_RCV15765_QUEUE_SIZE];   /* frame data */
 }tK_RCV15765_QUEUE;
 
 
+ typedef struct
+ {
+    uint8_t    bIsValid;
+    uint8_t    ucDiagType;
+
+    uint16_t   wBaudrate;
+    uint8_t    Tester_InterByteTime_ms;
+    uint8_t    ECU_MaxInterByteTime_ms;
+    uint16_t   ECU_MaxResponseTime_ms;
+    uint16_t   Tester_MaxNewRequestTime_ms;  
+
+    uint8_t    nInitFrmLen;
+    uint8_t    ucInitFrmData[10];
+    uint8_t    ucLogicChanIndex;
+    uint8_t    reserve1;
+    uint8_t    reserve2;
+}tKLINE_CONFIG;
+
+typedef struct
+{
+    uint32_t dwLocalID;
+	uint8_t  ucRdDatSerID;
+	uint8_t ucLidLength;
+	uint8_t ucMemSize;
+	uint8_t  ucLogicChanIndex;
+    uint16_t wSampleCyc;
+    uint8_t reserve1;
+    uint8_t reserve2;
+	uint32_t dwNextTime;
+}tKLINE_SIGNAL;
+
+
+extern tKLINE_CONFIG kline_config[2];
+extern tKLINE_SIGNAL *kline_siganl[50];//extern tKLINE_SIGNAL kline_siganl[50];
+extern uint8_t k_sig_num;
 
 extern KLINE_INIT_STATE KlineInitState[2];
-
-extern int OpenKline(void);
-
 extern KLINE_TX_STATE_TYPE kline_TxState;
 extern KLINE_RX_STATE_TYPE kline_RxState;
-extern uint32_t k_rcv_last_time;
-extern tK_RCV15765_QUEUE k15765buf;
+extern tK_RCV15765_QUEUE k15765queue;
 
 
+extern int OpenKline(void);
 extern ssize_t read_kfile(int fd, unsigned char *buf, off_t offset, unsigned int to);
-extern void handl_K_rcvdata(unsigned char *pbuf,int len);
+extern void handl_K_rcvdata(unsigned char *pbuf);
 
 
 

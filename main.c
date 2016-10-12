@@ -1,60 +1,44 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <errno.h>
-#include <sys/ipc.h>
-#include <semaphore.h>
-#include <fcntl.h>
-#include <signal.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <linux/socket.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
-
-
-#include "common.h"
-#include "queue.h"
+#include <sys/wait.h>
 
 #include "sd.h"
 #include "boot.h"
 #include "readcfg.h"
+#include "queue.h"
 
 #include "gpio.h"
+#include "led.h"
 #include "rtc.h"
+#include "monitor.h"
 
 #include "can.h"
 #include "kline.h"
-#include "net3g.h"
 
+#include "net3g.h"
+#include "recfile.h"
 #include "upload_file.h"
 
 #include "task.h"
-#include "monitor.h"
 
 
 
 
 void net_to_manage(void)
 {
-	static unsigned int g_TimeoutCnt = 0;
+	static unsigned int to_cnt = 0;
 
-	if(g_Rcv3gCnt > g_LastRcvCnt)
+	if(net3g.rcvcnt > net3g.rcvcnt_last)
 	{
-		g_LastRcvCnt = g_Rcv3gCnt;
-		g_TimeoutCnt = 0;
-		g_3gTryCnt = 0;
+		net3g.rcvcnt_last = net3g.rcvcnt;
+		to_cnt = 0;
+		g_sys_info.t15down_3gtries = 0;
 	}
 	else/*3g timeout*/
 	{
-		g_TimeoutCnt++;
-		if(g_TimeoutCnt >= 2)
+		to_cnt++;
+		if(to_cnt >= 2)
 		{			
 			g_sys_info.net_stat = 0;
 			if(g_sys_info.pppd_pid > 0)  //kill pppd
@@ -69,17 +53,18 @@ void net_to_manage(void)
 				start3G();
 				reinit_3g_net();
 				g_sys_info.state_3g = 1;
-				g_TimeoutCnt = 0;
+				to_cnt = 0;
 			}				
+			monitor();
 		}
-		monitor();
+		//monitor();
 	}
 }
 
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
-	pthread_t id_can,id_k,id_sd,id_k_1ms,id_3g,id_gps,id_CheSndFile,id_wd;
+	pthread_t id_can,id_k,id_sd,id_gps,id_ChkSndFile,id_wd;
 	pthread_t id_udprcv,id_handle_msg,id_checkmsgrx;
 	pthread_t id_heartbeat;
 	int ret;
@@ -88,9 +73,9 @@ void main(int argc,char *argv[])
 	init_edas_state();
 	read_edas_cfg();
 	#if	CFG_GPS_ENABLE
-	ret=pthread_create(&id_gps,NULL,(void *)task_gps,NULL);
+	ret = pthread_create(&id_gps,NULL,(void *)task_gps,NULL);
 	#endif	
-	InitQueue(&msg_queue);
+	InitQueue(&curMsgstate.queue);
 	init_gpio();
 	edas_power_on();
 	init_adc();	
@@ -101,7 +86,7 @@ void main(int argc,char *argv[])
 	ret=pthread_create(&id_wd,NULL,(void *)task_wd,NULL);
 	
 	init_user_mutex();
-	read_user_cfgset();
+	acquire_user_cfgset();
 	curMsgstate.state = MsgState_rcv;	
 	
 	#if	CFG_3G_ENABLE
@@ -110,11 +95,11 @@ void main(int argc,char *argv[])
 	g_sys_info.state_3g = 1;
 	ret=pthread_create(&id_can,       NULL,(void *)task_can,        NULL);
 	ret=pthread_create(&id_k,         NULL,(void *)task_k,          NULL);
-	ret=pthread_create(&id_sd,        NULL,(void *)task_recfile,         NULL);
+	ret=pthread_create(&id_sd,        NULL,(void *)task_recfile,    NULL);
 	
 	#if	CFG_3G_ENABLE
 	ret=pthread_create(&id_heartbeat, NULL,(void *)task_heartbeat,  NULL);
-	ret=pthread_create(&id_CheSndFile,NULL,(void *)task_ChkSndFile, NULL);
+	ret=pthread_create(&id_ChkSndFile,NULL,(void *)task_ChkSndFile, NULL);
 	ret=pthread_create(&id_udprcv,    NULL,(void *)task_udprcv,     NULL);
 	ret=pthread_create(&id_handle_msg,NULL,(void *)task_handle_msg, NULL);
 	ret=pthread_create(&id_checkmsgrx,NULL,(void *)task_check_msgrx,NULL);
@@ -122,17 +107,23 @@ void main(int argc,char *argv[])
 
 	while(1)
 	{
-		static unsigned int g_SysCnt = 0;
+		static unsigned int systick = 0;
 				
-		led_func();
+		led_off();
+		if(g_sys_info.net_stat==1){
+			led_usb_blink();
+		}
+		else{
+			edas_led_usbon();
+		}
+		g_sys_info.state_T15 = is_T15_on();
 		usleep(500000);//500ms
 
-		g_SysCnt++;
-		if((g_SysCnt % 120) == 0) //500ms * 120 = 1min
-		{
+		systick ++;
+		if((systick % 120) == 0){ //500ms * 120 = 1min
 			net_to_manage();			
 		}
 	}
 
-	DestroyQueue(&msg_queue);//can not reach here in normal
+	DestroyQueue(&curMsgstate.queue);//can not reach here in normal
 }

@@ -1,37 +1,25 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <errno.h>
-#include <sys/ipc.h>
-#include <semaphore.h>
 #include <fcntl.h>
-
-#include <signal.h>
-#include <sys/types.h>
+#include <unistd.h>
 
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
-#include <net/if.h>
+
 #include <linux/socket.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
+
 #include <string.h>
-#include <errno.h>
-#include <time.h>
+
 #include "can.h"
+#include "common.h"
 #include "readcfg.h"
-#include "kline.h"
-#include "gpio.h"
-#include "readcfg.h"
-#include "gpio.h"
+#include "led.h"
 
 
-int s_can0,s_can1;
-struct sockaddr_can addr_can0,addr_can1;
-struct ifreq ifr_can0,ifr_can1;
 
-tRAWCAN_RCV_QUEUE can0queue,can1queue;
+
+
+struct _can_struct can_struct[CAN_CHANNEL_MAX];
 
 tCAN_RCV1939_QUEUE can1939buf[2];
 tCAN_RCV15765_QUEUE can15765buf;
@@ -64,14 +52,6 @@ uint16_t uiRxDataLength[CAN_LOGIC_MAX];
 uint8_t  ucRxBuff[CAN_LOGIC_MAX][268];
 
 
-/*set the can filter; when add a new canfilter,canxft_cnt++*/
-struct can_filter can0filter[100];
-struct can_filter can1filter[100];
-int can0ft_cnt = 0;
-int can1ft_cnt = 0;
-
-//struct can0_frame,can1_frame,can0_fr,can1_fr,can0_frdup,can1_frdup;
-//fd_set can0_rset,can1_rset;
 
 void Can_RxIndication(uint8_t channel)
 {
@@ -91,77 +71,12 @@ void Can_TxConfirmation(uint8_t logchan,uint8_t result)
     else //if( result == TX_WRONG_DATA )
     {
         USB_Flash_Status[logchan] += result;
-    }
-    
+    }   
 }
 
-
-void rawcaninit()
-{
-	can0queue.wp=0;
-	can0queue.rp=0;
-	can0queue.cnt=0;
-	can1queue.wp=0;
-	can1queue.rp=0;
-	can1queue.cnt=0;
-}
-
-int socketCanInit(int chan)
-{
-	int ret;
-
-	rawcaninit();
-	if(chan == 0)
-	{
-		s_can0 = socket(PF_CAN,SOCK_RAW,CAN_RAW);
-		strcpy(ifr_can0.ifr_name,"can0");
-		ret = ioctl(s_can0,SIOCGIFINDEX,&ifr_can0);
-		if(ret <0 ){
-			perror("ioctl can0 failed");
-			return 1;
-		}
-		addr_can0.can_family = PF_CAN;
-		addr_can0.can_ifindex = ifr_can0.ifr_ifindex;
-		ret = bind(s_can0,(struct sockaddr *)&addr_can0,sizeof(addr_can0));
-		if(ret<0){
-			perror("bind can0 failed");
-		}
-	
-	}
-	else if(chan =1)
-	{
-		s_can1 = socket(PF_CAN,SOCK_RAW,CAN_RAW);
-		strcpy(ifr_can1.ifr_name,"can1");
-		ret = ioctl(s_can1,SIOCGIFINDEX,&ifr_can1);
-		if(ret <0 ){
-			perror("ioctl can0 failed");
-			return 1;
-		}
-		addr_can1.can_family = PF_CAN;
-		addr_can1.can_ifindex = ifr_can1.ifr_ifindex;
-		ret = bind(s_can1,(struct sockaddr *)&addr_can1,sizeof(addr_can1));
-		if(ret<0){
-			perror("bind can1 failed");
-		}
-	}
-
-}
-
-int CanFilterInit(int chan)
-{
-	int ret;
-	can0filter[0].can_id = 0x2000|CAN_EFF_FLAG;
-	can0filter[0].can_mask = 0xFFF;
-	can0ft_cnt++;
-	ret = setsockopt(s_can0,SOL_CAN_RAW,CAN_RAW_FILTER,&can0filter,can0ft_cnt*sizeof(can0filter));
-	if(ret<0)
-		perror("setsockopt failed");
-	return 1;
-}
 
 void handle_1939(struct can_frame *fr,int chan)
 {
-	int i;
 	unsigned int temp_id;
 
 	if(fr->can_id & 0x80000000)
@@ -183,7 +98,7 @@ void handle_1939(struct can_frame *fr,int chan)
 	memcpy(&can1939buf[chan].qdata[can1939buf[chan].wp].data[15],&fr->data[0],8);
 	can1939buf[chan].qdata[can1939buf[chan].wp].len = 23;
 
-#if dug_can > 0 
+#if DEBUG_CAN > 0 
 	printf_va_args("can%drcv1939:",chan);
 	for(i=0;i<23;i++)
 	{
@@ -201,10 +116,8 @@ void handle_15765(struct can_frame *fr,int chan,int msg_no)
 {
 	tRXBUF rxbuf;
 	uint8_t Lchan;
-	int i;
 
     Lchan = (chan<<2) + msg_no;
-	//My_Printf(dug_can,"15765-chan:%d,msg_no:%d,Lchan:%d,currentlid:0x%08x\n",chan,msg_no,Lchan,currentlid);
 	
     (void)memset(&rxbuf,0, sizeof(rxbuf));
     rxbuf.id.l=fr->can_id;
@@ -264,7 +177,7 @@ void handle_15765(struct can_frame *fr,int chan,int msg_no)
         	can15765buf.qdata[can15765buf.wp].len = 17+uiRxDataLength[Lchan];
 		}
 
-#if dug_can > 0
+#if DEBUG_CAN > 0
 			printf_va_args("can%drcv15765-%d:",Lchan);
 			for(i=0;i<can15765buf.qdata[can15765buf.wp].len;i++)
 			{
@@ -461,11 +374,11 @@ uint8_t DirectCanTransmit(uint8_t logchan)
 
 	if(can_logic[logchan].channel == 0)
 	{		
-		write(s_can0,&snd_obj,sizeof(snd_obj));
+		write(can_struct[0].socket,&snd_obj,sizeof(snd_obj));
 	}
 	else if(can_logic[logchan].channel == 1)
 	{
-		write(s_can1,&snd_obj,sizeof(snd_obj));
+		write(can_struct[1].socket,&snd_obj,sizeof(snd_obj));
 	}
 	outq[logchan].cnt--;
 
@@ -474,7 +387,7 @@ uint8_t DirectCanTransmit(uint8_t logchan)
 	outq[logchan].rp++; 				//2011-10-17, after successful tx, inc rp
 	outq[logchan].rp &= CAN_TX_QUEUE_MAX_INDEX;
 	led_Tx_blink(5);
-#if dug_can > 0
+#if DEBUG_CAN > 0
 	printf_va_args("DirectLogCan[%d]Trans,chann:%d, id:%08x!\n",logchan,can_logic[logchan].channel,snd_obj.can_id);
 #endif
 	/**/
@@ -507,22 +420,22 @@ void up_can0(void)
 
 	system("ifconfig can0 up");
 	sleep(1);
-#if dug_can > 0 		
+#if DEBUG_CAN > 0 		
 	printf_va_args("ifconfig can0 up,rate_cnt:%d,bitrate:%s!\n",rate_cnt,rate[rate_cnt]);
 #endif
-	s_can0 = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+	can_struct[0].socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	strcpy(ifr0.ifr_name, "can0");
-	ret = ioctl(s_can0, SIOCGIFINDEX, &ifr0);
+	ret = ioctl(can_struct[0].socket, SIOCGIFINDEX, &ifr0);
 	addr0.can_family = PF_CAN;
 	addr0.can_ifindex = ifr0.ifr_ifindex;
-	ret = bind(s_can0, (struct sockaddr *)&addr0, sizeof(addr0));
+	ret = bind(can_struct[0].socket, (struct sockaddr *)&addr0, sizeof(addr0));
 	if (ret < 0) {
 		perror("bind can0 failed");
 	}
-	ret = setsockopt(s_can0, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[0], canfcnt[0] * sizeof(canfilter[0][0]));
-#if dug_can > 0 		
+	ret = setsockopt(can_struct[0].socket, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[0], canfcnt[0] * sizeof(canfilter[0][0]));
+#if DEBUG_CAN > 0 		
 	if (ret < 0) {
-				printf_va_args("setsockopt can0 failed");
+		printf_va_args("setsockopt can0 failed");
 	}
 #endif
 }
@@ -537,7 +450,6 @@ void up_can1(void)
 	struct ifreq ifr1;
 	int ret;
 	struct sockaddr_can addr1;
-	pthread_t id_can1_read;
 
 	system("ifconfig can1 down");
 	sleep(1);
@@ -555,17 +467,26 @@ void up_can1(void)
 
 	system("ifconfig can1 up");
 	sleep(1);
-#if dug_can > 0		
+#if DEBUG_CAN > 0		
 	printf_va_args("ifconfig can1 up,rate_cnt:%d,bitrate:%s!\n",rate_cnt,rate[rate_cnt]);
 #endif
-	s_can1 = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+	can_struct[1].socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 	strcpy(ifr1.ifr_name, "can1");
-	ret = ioctl(s_can1, SIOCGIFINDEX, &ifr1);
+	ret = ioctl(can_struct[1].socket, SIOCGIFINDEX, &ifr1);
 	addr1.can_family = PF_CAN;
 	addr1.can_ifindex = ifr1.ifr_ifindex;
-	bind(s_can1, (struct sockaddr *)&addr1, sizeof(addr1));
-	ret = setsockopt(s_can1, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[1], canfcnt[1] * sizeof(canfilter[1][0]));
+	bind(can_struct[1].socket, (struct sockaddr *)&addr1, sizeof(addr1));
+	ret = setsockopt(can_struct[1].socket, SOL_CAN_RAW, CAN_RAW_FILTER, &canfilter[1], canfcnt[1] * sizeof(canfilter[1][0]));
 }
+
+
+int ulFlashRxId[3],ulFlashTxId[3];
+volatile uint32_t currentlid;
+volatile uint32_t currentMSize;
+int currenLogicChan;
+uint8_t currentLidlen;
+uint8_t b15765rcv;
+uint8_t I2L[CAN_LOGIC_MAX]; /*indexnum to logic number*/   /*查找I对应具体的逻辑通道值*/
 
 
 
@@ -579,7 +500,7 @@ void can_info_process(void)
 
 	for(i=0;i<CAN_CHANNEL_MAX;i++)
 	{			
-		for(j=0;j< can_channel[i].ucLogicChanNum;j++)
+		for(j=0;j<can_channel[i].ucLogicChanNum;j++)
 		{			
 			for(k=0;k<can_channel[i].pt_logic_can[j]->ucSignalNum;k++)
 			{
@@ -607,10 +528,12 @@ void can_info_process(void)
 									buffer[1] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID>>8;
 									buffer[2] = can_channel[i].pt_logic_can[j]->pt_signal[k]->dwLocalID & 0xFF;
 									break;
-								default: break;
+								default: 
+									break;
 							}
-							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength+1,(i<<2+j));	
-#if dug_can > 0
+							//Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength+1,(i<<2+j));	
+							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucLidLength+1,i<<(2+j));//20161012 xyl	
+#if DEBUG_CAN > 0
 							printf_va_args("CAN_Send15765,ulFlashTxId[%d]:%08x,%02x %02x %02x\n",i,ulFlashTxId[i],buffer[0],buffer[1],buffer[2]);
 #endif
 							break;
@@ -634,8 +557,9 @@ void can_info_process(void)
 									break;
 								default: break;
 							}
-							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize+2,(i<<2+j));
-#if dug_can
+							//Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize+2,(i<<2+j));//20161012 xyl	
+							Can_SendIso15765Buff(buffer,can_channel[i].pt_logic_can[j]->pt_signal[k]->ucMemSize+2,i<<(2+j));
+#if DEBUG_CAN
 							printf_va_args("CAN_Send15765,ulFlashTxId[%d]:%08x,:%02x %02x %02x %02x %02x\n",i,ulFlashTxId[i],buffer[0],buffer[1],buffer[2],buffer[3],buffer[4]);
 #endif
 							break;

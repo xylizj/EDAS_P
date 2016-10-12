@@ -1,80 +1,25 @@
-#include "common.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <errno.h>
-#include <sys/ipc.h>
-#include <semaphore.h>
-#include <fcntl.h>
-
-#include <signal.h>
-#include <sys/types.h>
-
-#include <sys/ioctl.h>
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <linux/socket.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <string.h>
-#include <errno.h>
 #include <time.h>
-#include "can.h"
-#include "readcfg.h"
-#include "kline.h"
-#include "gpio.h"
-#include "net3g.h"
-#include "rtc.h"
-#include "upload_file.h"
 #include <string.h>
-
-//#include <sys/vfs.h> /* 或者 <sys/statfs.h> */
-#include <sys/statfs.h>
 #include <stdarg.h>
+#include <pthread.h>
+#include "common.h"
+#include "rtc.h"
 
-unsigned int DeviceID= 20150801; // for DBTS
-//unsigned int DeviceID= 20151112;  //for CVS
 
 pthread_mutex_t g_file_mutex;
 pthread_mutex_t g_rtc_mutex;
 
-LinkQueue msg_queue;
-unsigned int g_Rcv3gCnt;
-unsigned int g_LastRcvCnt;
-
-bool g_isDownloadCfg = FALSE;
-
-
-int sockfd;
-tMsgState curMsgstate;
-
-
 volatile unsigned int US_SECOND;
 volatile unsigned int US_MILISECOND;
 
-volatile double latitude;
-volatile double longitude;    
-volatile double speed;
-volatile double height;
+tMsgState curMsgstate;
 
-int latitude_du;
-int longitude_du;
-
-//char T15_state;
 volatile tEDAS_P_STATE g_sys_info;
-char CAR_ID[40] = "E0801"; //for DBTS
-char g_ServerIP[20];
-char g_ServerPort[10];
-//debug para:
-/*char dug_readcfg = 1;
-char dug_gps = 1;
-char dug_can = 1;
-char dug_k = 1;
-char dug_3g = 1;
-char dug_rtc = 0;
-char dug_sd = 1;
-*/
+
+
+
+
+
 
 char *itoa(int num, char *str, int radix)
 {
@@ -108,36 +53,53 @@ char *itoa(int num, char *str, int radix)
 }
 
 
-//#define RECORDPATH "/media/sd-mmcblk0p1/rec"
+int checkdata(unsigned char *buf,unsigned int n)
+{
+	int i;
+	unsigned int sum;
+	unsigned char result;
+	sum = 0;
+	for(i=0;i<n-1;i++)
+	{
+		sum += buf[i];
+	}
+	result = 0xFF & sum;
+	if(buf[n-1] == result)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
 
-void creat_FileName(unsigned char *ptPath,unsigned char *name)
+
+void creat_FileName(char *ptPath, char *name)
 {
 	unsigned char year,month,date,hour,minute,second;
 	unsigned char rtctime[8];
 	int pathlen;
 	int caridlen;
 	
-	pathlen = strlen(RECORDPATH);
-	caridlen = strlen(CAR_ID);
-
-	
-
-	if(CAR_ID[caridlen-1] == '\n')
+	pathlen = strlen(ptPath);
+	caridlen = strlen(g_sys_info.CAR_ID);
+	if(g_sys_info.CAR_ID[caridlen-1] == '\n')
 	{
-		CAR_ID[caridlen-1] = 0;
+		g_sys_info.CAR_ID[caridlen-1] = 0;
 		caridlen--;
 	}
 	
-	
-	
-	printf("strlen(CAR_ID):%d\n",strlen(CAR_ID));
-	printf("CARDID:%s\n",CAR_ID);
-	memset(name,0,255);
+#if DEBUG_SYS > 0
+	printf("strlen(g_sys_info.CAR_ID):%d\n",strlen(g_sys_info.CAR_ID));
+	printf("CARDID:%s\n",g_sys_info.CAR_ID);
+#endif
+	//memset(name,0,255);//20160928 xyl remove
 	memcpy(name,RECORDPATH,strlen(RECORDPATH));
 
-	memcpy(&name[pathlen],CAR_ID,strlen(CAR_ID));
+	memcpy(&name[pathlen],g_sys_info.CAR_ID,strlen(g_sys_info.CAR_ID));
 	name[pathlen+caridlen+0] = '_';
-	caridlen++;
+	caridlen += 1;
 	
 	get_rtctime(rtctime);
 	
@@ -171,7 +133,7 @@ void creat_FileName(unsigned char *ptPath,unsigned char *name)
 }
 
 
-void creatFileName(unsigned char *name)
+/*void creatFileName(unsigned char *name)
 {
 	unsigned char year,month,date,hour,minute,second;
 	unsigned char rtctime[8];
@@ -199,7 +161,7 @@ void creatFileName(unsigned char *name)
 	name[11] = '0'+(second & 0x0F);;
 	name[12] = 0;
 	
-}
+}*/
 
 unsigned int getSystemTime()
 {
@@ -207,23 +169,24 @@ unsigned int getSystemTime()
 	struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts); 
 	stick = ts.tv_sec * 1000 + ts.tv_nsec/1000000;
+
 	return stick;
 }
 
 
-void upDateTime()
+void update_time()
 {
-	int stick;
+	//int stick;
 	struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts); 
 	
-	stick = ts.tv_sec * 1000 + ts.tv_nsec/1000000;
+	//stick = ts.tv_sec * 1000 + ts.tv_nsec/1000000;
 
 	US_MILISECOND = ts.tv_nsec/1000000;
 	US_SECOND = ts.tv_sec;
 }
 
-void chksum(uint8_t *buf,int len)
+void chksum(char *buf,int len)
 {
 	unsigned int i,s;
 	s=0;
@@ -248,7 +211,7 @@ void makeKillCommand(char *command,int pid)
 int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free)
 {
 	char buf[200] = {0};
-	FILE    *sd_fp;
+	FILE *sd_fp;
 	int read_cnt;
 	int ret;
 	char *p[10];
@@ -257,12 +220,9 @@ int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free)
 	sd_fp = popen("df /media/sd-mmcblk0p1/  | grep /dev/mmcblk0p1 ", "r");
 	if ( sd_fp != NULL ) 
     {
-        read_cnt = fread(buf, sizeof(char), 200-1, sd_fp);
-		
-		
+        read_cnt = fread(buf, sizeof(char), 200-1, sd_fp);		
         if (read_cnt > 0) 
         {
-
 			p[0] = strtok(buf," ");
 		
 			for(i=1;i<6;i++)
@@ -294,16 +254,25 @@ int getSDstatus(unsigned int *total,unsigned int *used,unsigned int *free)
 
 void init_edas_state(void)
 {
+	g_sys_info.state_cfg = 0;
 	g_sys_info.state_T15 = 1;
-	g_sys_info.state_3g = 0;
-	g_sys_info.net_stat = -1;
-	g_sys_info.state_gps        = 2;
+	g_sys_info.state_gps = 2;
 	g_sys_info.state_k          = 2;
 	g_sys_info.state_can0_1939  = 2;
 	g_sys_info.state_can0_15765 = 2;
 	g_sys_info.state_can1_1939  = 2;
 	g_sys_info.state_can1_15765 = 2;
+	g_sys_info.state_rtc = 0;
+	g_sys_info.state_3g = 0;
+	g_sys_info.pppd_pid = -1;
+	g_sys_info.net_stat = -1;
+	g_sys_info.downloading_cfg = FALSE;
+	g_sys_info.CAR_ID = NULL;
+	g_sys_info.DeviceID = 0;
+	g_sys_info.savegps = 0;
+	g_sys_info.t15down_3gtries = 0;
 }
+
 
 void init_user_mutex(void)
 {
@@ -334,9 +303,3 @@ void printf_va_args(const char* fmt, ...)
     va_end(args);         //结束可变参数的获取
     #endif
 }
-
-
-
-
-
-
